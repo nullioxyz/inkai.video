@@ -1,30 +1,37 @@
-import HeaderWrapper from '@/components/shared/HeaderWrapper';
-import SmoothScrollProvider from '@/components/shared/SmoothScroll';
-import DemoShowcase from '@/components/shared/demo-showcase';
-import Footer from '@/components/shared/footer/Footer';
+import AppShell from '@/components/shared/AppShell';
+import { ThemeProvider } from '@/components/shared/ThemeProvider';
 import { AppContextProvider } from '@/context/AppContext';
+import { LocaleProvider } from '@/context/LocaleContext';
+import { LOCALE_COOKIE_NAME } from '@/i18n/config';
+import { resolveLocale } from '@/i18n/resolve-locale';
 import { interTight } from '@/utils/font';
-import { ReactNode, Suspense } from 'react';
+import { cookies } from 'next/headers';
+import { ReactNode } from 'react';
 import './globals.css';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${interTight.variable} antialiased`}>
-        <AppContextProvider>
-          <Suspense>
-            <SmoothScrollProvider>
-              <HeaderWrapper />
-              <DemoShowcase activeDemoId={1} />
-              {children}
-              <Footer />
-            </SmoothScrollProvider>
-          </Suspense>
-        </AppContextProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          storageKey="inkai-theme"
+          disableTransitionOnChange>
+          <LocaleProvider initialLocale={locale}>
+            <AppContextProvider>
+              <AppShell>{children}</AppShell>
+            </AppContextProvider>
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
