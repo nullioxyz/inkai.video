@@ -1,5 +1,5 @@
 import AppShell from '@/components/shared/AppShell';
-import { ThemeProvider } from '@/components/shared/ThemeProvider';
+import ThemeProvider from '@/components/shared/ThemeProvider';
 import { AppContextProvider } from '@/context/AppContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { LOCALE_COOKIE_NAME } from '@/i18n/config';
