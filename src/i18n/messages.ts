@@ -39,6 +39,14 @@ export const messages = {
     'dashboard.videoCreatedAt': 'Created at',
     'dashboard.downloadVideo': 'Download',
 
+    'landing.badge': 'for Tattoo Artists',
+    'landing.title.line1': 'Turn your tattoo projects',
+    'landing.title.line2': 'into realistic videos',
+    'landing.description':
+      'Create high-impact visual previews in seconds with AI: upload an image, choose the style, and generate videos that help clients see the concept on the body before the session.',
+    'landing.login': 'Login',
+    'landing.signup': 'Sign up',
+
     'upload.title': 'Project title',
     'upload.label': 'Image upload',
     'upload.inputImage': 'Input image',
@@ -135,6 +143,14 @@ export const messages = {
     'dashboard.videoCreatedAt': 'Data de criação',
     'dashboard.downloadVideo': 'Download',
 
+    'landing.badge': 'para Tatuadores',
+    'landing.title.line1': 'Transforme seus projetos de tatuagem',
+    'landing.title.line2': 'em vídeos realistas',
+    'landing.description':
+      'Crie prévias visuais impactantes em segundos com IA: envie uma imagem, escolha o estilo e gere vídeos que ajudam seu cliente a enxergar o conceito no corpo antes da sessão.',
+    'landing.login': 'Login',
+    'landing.signup': 'Inscreva-se',
+
     'upload.title': 'Título do projeto',
     'upload.label': 'Upload de imagem',
     'upload.inputImage': 'Imagem de entrada',
@@ -230,6 +246,14 @@ export const messages = {
     'dashboard.videoStatus': 'Stato',
     'dashboard.videoCreatedAt': 'Data di creazione',
     'dashboard.downloadVideo': 'Download',
+
+    'landing.badge': 'per Tatuatori',
+    'landing.title.line1': 'Trasforma i tuoi progetti tattoo',
+    'landing.title.line2': 'in video realistici',
+    'landing.description':
+      'Crea anteprime visive d\'impatto in pochi secondi con l\'IA: carica un\'immagine, scegli lo stile e genera video che aiutano il cliente a vedere il concept sul corpo prima della sessione.',
+    'landing.login': 'Login',
+    'landing.signup': 'Iscriviti',
 
     'upload.title': 'Titolo progetto',
     'upload.label': 'Caricamento immagine',
