@@ -3,18 +3,18 @@ import { PresetCategory, PresetItem, VideoJobItem } from '@/types/dashboard';
 export const PRESET_CATEGORIES: PresetCategory[] = ['braço', 'costas', 'pescoço', 'pernas', 'antebraço', 'peitoral'];
 
 export const DEFAULT_PRESETS: PresetItem[] = [
-  { id: 'arm-01', category: 'braço', name: 'Braço Definido', description: 'Composição com foco em definição e contraste leve.', imageSrc: '/images/ns-img-320.png' },
-  { id: 'arm-02', category: 'braço', name: 'Braço Intenso', description: 'Iluminação dramática para destacar volume muscular.', imageSrc: '/images/ns-img-321.png' },
-  { id: 'back-01', category: 'costas', name: 'Costas V-Shape', description: 'Enquadramento para evidenciar largura dorsal.', imageSrc: '/images/ns-img-322.png' },
-  { id: 'back-02', category: 'costas', name: 'Costas Clean', description: 'Visual mais limpo, ideal para conteúdo técnico.', imageSrc: '/images/ns-img-323.png' },
-  { id: 'neck-01', category: 'pescoço', name: 'Pescoço Forte', description: 'Preset com sombras sutis para definição cervical.', imageSrc: '/images/ns-img-324.png' },
-  { id: 'neck-02', category: 'pescoço', name: 'Pescoço Studio', description: 'Tom neutro com foco em clareza e textura.', imageSrc: '/images/ns-img-325.png' },
-  { id: 'leg-01', category: 'pernas', name: 'Pernas Potência', description: 'Recorte com ênfase em quadríceps e volume.', imageSrc: '/images/ns-img-326.png' },
-  { id: 'leg-02', category: 'pernas', name: 'Pernas Dinâmicas', description: 'Composição preparada para vídeo em movimento.', imageSrc: '/images/ns-img-327.png' },
-  { id: 'forearm-01', category: 'antebraço', name: 'Antebraço Grip', description: 'Contraste médio para evidenciar vascularização.', imageSrc: '/images/ns-img-367.png' },
-  { id: 'forearm-02', category: 'antebraço', name: 'Antebraço Clean', description: 'Preset leve para gravações explicativas.', imageSrc: '/images/ns-img-368.png' },
-  { id: 'chest-01', category: 'peitoral', name: 'Peitoral Volume', description: 'Iluminação frontal para realçar profundidade.', imageSrc: '/images/ns-img-369.png' },
-  { id: 'chest-02', category: 'peitoral', name: 'Peitoral Pro', description: 'Composição premium para anúncios e destaque.', imageSrc: '/images/ns-img-370.png' },
+  { id: 'arm-01', category: 'braço', name: 'Traço Fino no Braço', description: 'Animação suave para destacar linework e fluxo da tattoo no braço.', imageSrc: '/images/ns-img-320.png' },
+  { id: 'arm-02', category: 'braço', name: 'Braço Neo Trad', description: 'Contraste mais forte para valorizar cores e volume no estilo neo tradicional.', imageSrc: '/images/ns-img-321.png' },
+  { id: 'back-01', category: 'costas', name: 'Costas Fechamento', description: 'Composição ampla para visualizar tattoo grande de costas com leitura completa.', imageSrc: '/images/ns-img-322.png' },
+  { id: 'back-02', category: 'costas', name: 'Costas Blackwork', description: 'Preset focado em preto sólido, textura e impacto visual do blackwork.', imageSrc: '/images/ns-img-323.png' },
+  { id: 'neck-01', category: 'pescoço', name: 'Pescoço Delicado', description: 'Movimento leve para tattoos finas no pescoço com destaque de contorno.', imageSrc: '/images/ns-img-324.png' },
+  { id: 'neck-02', category: 'pescoço', name: 'Pescoço Bold', description: 'Sombras mais dramáticas para tattoos marcantes na região cervical.', imageSrc: '/images/ns-img-325.png' },
+  { id: 'leg-01', category: 'pernas', name: 'Perna Ornamental', description: 'Preset para composições ornamentais com boa leitura em toda a perna.', imageSrc: '/images/ns-img-326.png' },
+  { id: 'leg-02', category: 'pernas', name: 'Perna Realismo', description: 'Profundidade e contraste para estudos realistas em projetos de perna.', imageSrc: '/images/ns-img-327.png' },
+  { id: 'forearm-01', category: 'antebraço', name: 'Antebraço Fine Line', description: 'Visual limpo para tattoos de linha fina e alto detalhamento no antebraço.', imageSrc: '/images/ns-img-367.png' },
+  { id: 'forearm-02', category: 'antebraço', name: 'Antebraço Sombreado', description: 'Preset com foco em sombra e volume para tattoos mais densas.', imageSrc: '/images/ns-img-368.png' },
+  { id: 'chest-01', category: 'peitoral', name: 'Peitoral Simétrico', description: 'Composição frontal para tattoos simétricas e centrais no peitoral.', imageSrc: '/images/ns-img-369.png' },
+  { id: 'chest-02', category: 'peitoral', name: 'Peitoral High Contrast', description: 'Mais contraste para destacar preenchimento e textura em tattoos de peito.', imageSrc: '/images/ns-img-370.png' },
 ];
 
 const SAMPLE_VIDEO_URLS = [
