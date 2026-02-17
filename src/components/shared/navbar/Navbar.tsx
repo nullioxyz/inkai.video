@@ -36,7 +36,7 @@ const Navbar = ({ showTopNav }: { showTopNav: boolean }) => {
           <div className="flex items-center justify-center">
             <LocaleSwitcher
               compact
-              className="[&_select]:bg-secondary [&_select]:border-secondary [&_select]:text-accent [&_select]:h-10 [&_select]:rounded-full [&_select]:px-4 [&_select]:text-tagline-2 [&_select]:font-medium"
+              className="[&_select]:bg-secondary [&_select]:border-secondary [&_select]:text-accent [&_select]:h-10 [&_select]:rounded-full [&_select]:pl-4 [&_select]:pr-9 [&_select]:py-0 [&_select]:leading-none [&_select]:text-tagline-2 [&_select]:font-medium"
             />
           </div>
         </div>
