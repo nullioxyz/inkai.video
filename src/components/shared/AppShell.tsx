@@ -13,13 +13,16 @@ interface AppShellProps {
 const AppShell = ({ children }: AppShellProps) => {
   const pathname = usePathname();
   const isDashboardRoute = pathname.startsWith('/dashboard');
+  const isLandingRoute = pathname === '/';
 
   return (
     <Suspense>
       <SmoothScrollProvider>
-        {!isDashboardRoute && <HeaderWrapper />}
-        {children}
-        {!isDashboardRoute && <Footer />}
+        <div className={isLandingRoute ? 'dark' : undefined}>
+          {!isDashboardRoute && <HeaderWrapper />}
+          {children}
+          {!isDashboardRoute && <Footer />}
+        </div>
       </SmoothScrollProvider>
     </Suspense>
   );
