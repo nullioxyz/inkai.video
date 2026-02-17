@@ -7,8 +7,21 @@ import DashboardSidebar from './DashboardSidebar';
 import VideoDetailsPanel from './VideoDetailsPanel';
 import VideoGenerationDashboard from './VideoGenerationDashboard';
 
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'inkai-dashboard-sidebar-collapsed';
+
 const DashboardWorkspace = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [videos, setVideos] = useState<VideoJobItem[]>(DASHBOARD_VIDEO_LIBRARY);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const generationTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -66,12 +79,24 @@ const DashboardWorkspace = () => {
     }, 280);
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      } catch {
+        // Ignore storage access issues.
+      }
+      return next;
+    });
+  };
+
   return (
     <main className="bg-background-3 dark:bg-background-7 min-h-screen">
       <div className="flex min-h-screen w-full">
         <DashboardSidebar
           collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed((prev) => !prev)}
+          onToggle={handleToggleSidebar}
           videos={videos}
           selectedVideoId={selectedVideoId}
           onSelectVideo={setSelectedVideoId}

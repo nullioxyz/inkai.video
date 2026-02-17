@@ -2,6 +2,7 @@
 
 import { useLocale } from '@/context/LocaleContext';
 import { VideoJobItem } from '@/types/dashboard';
+import mainLogo from '@public/images/shared/main-logo.svg';
 import logo from '@public/images/shared/logo.svg';
 import logoDark from '@public/images/shared/logo-dark.svg';
 import Image from 'next/image';
@@ -134,10 +135,15 @@ const DashboardSidebar = ({
       className={`border-stroke-3 dark:border-stroke-7 bg-background-2 dark:bg-background-8 text-secondary dark:text-accent sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ${collapsed ? 'w-[78px]' : 'w-[290px]'}`}>
       <div className="flex h-full flex-col">
         <div className="border-stroke-3 dark:border-stroke-7 flex items-center justify-between border-b px-4 py-4">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <Image src={logoDark} alt="Inkai" width={28} height={28} className="block dark:hidden" />
-            <Image src={logo} alt="Inkai" width={28} height={28} className="hidden dark:block" />
-            {!collapsed && <span className="text-tagline-2 font-medium tracking-wide text-secondary dark:text-accent">INKAI</span>}
+          <div className="flex items-center overflow-hidden">
+            {collapsed ? (
+              <>
+                <Image src={logoDark} alt="Inkai" width={28} height={28} className="block dark:hidden" />
+                <Image src={logo} alt="Inkai" width={28} height={28} className="hidden dark:block" />
+              </>
+            ) : (
+              <Image src={mainLogo} alt="Inkai" width={132} height={30} className="dark:invert" />
+            )}
           </div>
 
           <button
