@@ -24,6 +24,8 @@ interface DashboardSidebarProps {
   selectedVideoId: string | null;
   onSelectVideo: (videoId: string) => void;
   onCreateNewVideo: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 const menuItems: SidebarMenuItem[] = [
@@ -114,6 +116,8 @@ const DashboardSidebar = ({
   selectedVideoId,
   onSelectVideo,
   onCreateNewVideo,
+  mobileOpen = false,
+  onMobileClose,
 }: DashboardSidebarProps) => {
   const pathname = usePathname();
   const { t, intlLocale } = useLocale();
@@ -130,13 +134,18 @@ const DashboardSidebar = ({
     return date.toLocaleDateString(intlLocale, { day: '2-digit', month: '2-digit' });
   };
 
-  return (
-    <aside
-      className={`border-stroke-3 dark:border-stroke-7 bg-background-2 dark:bg-background-8 text-secondary dark:text-accent sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ${collapsed ? 'w-[78px]' : 'w-[290px]'}`}>
+  const handleMobileClose = () => {
+    onMobileClose?.();
+  };
+
+  const renderSidebarContent = (isMobile: boolean) => {
+    const isCollapsed = isMobile ? false : collapsed;
+
+    return (
       <div className="flex h-full flex-col">
         <div className="border-stroke-3 dark:border-stroke-7 flex items-center justify-between border-b px-4 py-4">
           <div className="flex items-center overflow-hidden">
-            {collapsed ? (
+            {isCollapsed ? (
               <>
                 <Image src={logoDark} alt="Inkai" width={28} height={28} className="block dark:hidden" />
                 <Image src={logo} alt="Inkai" width={28} height={28} className="hidden dark:block" />
@@ -146,27 +155,45 @@ const DashboardSidebar = ({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={collapsed ? t('sidebar.showSidebar') : t('sidebar.hideSidebar')}
-            className="text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent rounded-sm p-1.5 transition">
-            {collapsed ? (
+          {isMobile ? (
+            <button
+              type="button"
+              onClick={handleMobileClose}
+              aria-label={t('sidebar.hideSidebar')}
+              className="text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent rounded-sm p-1.5 transition">
               <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="m9 5 7 7-7 7" />
+                <path d="M6 6l12 12" />
+                <path d="M18 6 6 18" />
               </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="m15 5-7 7 7 7" />
-              </svg>
-            )}
-          </button>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={isCollapsed ? t('sidebar.showSidebar') : t('sidebar.hideSidebar')}
+              className="text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent rounded-sm p-1.5 transition">
+              {isCollapsed ? (
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="m9 5 7 7-7 7" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="m15 5-7 7 7 7" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
 
         <nav aria-label="Dashboard navigation" className="border-stroke-3 dark:border-stroke-7 space-y-1 border-b px-3 py-4">
           <button
             type="button"
-            onClick={onCreateNewVideo}
+            onClick={() => {
+              onCreateNewVideo();
+              if (isMobile) {
+                handleMobileClose();
+              }
+            }}
             className="text-tagline-2 text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent flex w-full cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-left transition">
             <span className="shrink-0">
               <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -175,7 +202,7 @@ const DashboardSidebar = ({
                 <path d="M8 12h8" />
               </svg>
             </span>
-            {!collapsed && <span>{t('sidebar.createNewVideo')}</span>}
+            {!isCollapsed && <span>{t('sidebar.createNewVideo')}</span>}
           </button>
 
           {menuItems.map((item) => {
@@ -185,24 +212,31 @@ const DashboardSidebar = ({
               <Link
                 key={item.key}
                 href={item.href}
+                onClick={() => {
+                  if (isMobile) {
+                    handleMobileClose();
+                  }
+                }}
                 className={`text-tagline-2 flex items-center gap-3 rounded-sm px-3 py-2 transition ${
                   isActive
                     ? 'bg-background-4 dark:bg-background-7 text-secondary dark:text-accent'
                     : 'text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent'
                 }`}>
                 <span className="shrink-0">{item.icon}</span>
-                {!collapsed && <span>{t(item.labelKey)}</span>}
+                {!isCollapsed && <span>{t(item.labelKey)}</span>}
               </Link>
             );
           })}
         </nav>
 
         <section className="flex-1 overflow-y-auto px-2 py-4">
-          {!collapsed && <p className="text-tagline-3 mb-3 font-medium tracking-wide text-secondary/50 dark:text-accent/50">{t('sidebar.videos')}</p>}
+          {!isCollapsed && (
+            <p className="text-tagline-3 mb-3 font-medium tracking-wide text-secondary/50 dark:text-accent/50">{t('sidebar.videos')}</p>
+          )}
 
           <div className="space-y-1">
             {videos.length === 0 ? (
-              !collapsed && <p className="text-tagline-3 text-secondary/50 dark:text-accent/50">{t('sidebar.noVideos')}</p>
+              !isCollapsed && <p className="text-tagline-3 text-secondary/50 dark:text-accent/50">{t('sidebar.noVideos')}</p>
             ) : (
               videos.map((video) => {
                 const selected = video.id === selectedVideoId;
@@ -211,14 +245,19 @@ const DashboardSidebar = ({
                   <button
                     key={video.id}
                     type="button"
-                    onClick={() => onSelectVideo(video.id)}
+                    onClick={() => {
+                      onSelectVideo(video.id);
+                      if (isMobile) {
+                        handleMobileClose();
+                      }
+                    }}
                     className={`w-full cursor-pointer rounded-sm px-3 py-2 text-left transition ${
                       selected
                         ? 'bg-background-4 dark:bg-background-7 text-secondary dark:text-accent'
                         : 'text-secondary/70 dark:text-accent/70 hover:bg-background-4/70 dark:hover:bg-background-7/70 hover:text-secondary dark:hover:text-accent'
                     }`}>
                     <div className="flex items-start gap-2">
-                      {!collapsed && (
+                      {!isCollapsed && (
                         <span className="text-secondary/50 dark:text-accent/50 mt-0.5 shrink-0">
                           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
@@ -227,7 +266,7 @@ const DashboardSidebar = ({
                         </span>
                       )}
 
-                      {!collapsed && (
+                      {!isCollapsed && (
                         <div className="min-w-0 flex-1 space-y-1">
                           <p className="truncate text-sm text-secondary dark:text-accent">{video.title}</p>
                           <p className="text-tagline-3 flex items-center gap-1.5 text-secondary/50 dark:text-accent/50">
@@ -239,9 +278,7 @@ const DashboardSidebar = ({
                         </div>
                       )}
 
-                      {collapsed && (
-                        <span className={`mx-auto mt-1 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[video.status]}`} />
-                      )}
+                      {isCollapsed && <span className={`mx-auto mt-1 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[video.status]}`} />}
                     </div>
                   </button>
                 );
@@ -250,7 +287,33 @@ const DashboardSidebar = ({
           </div>
         </section>
       </div>
-    </aside>
+    );
+  };
+
+  return (
+    <>
+      <aside
+        className={`border-stroke-3 dark:border-stroke-7 bg-background-2 dark:bg-background-8 text-secondary dark:text-accent sticky top-0 hidden h-screen shrink-0 border-r transition-all duration-300 md:block ${collapsed ? 'w-[78px]' : 'w-[290px]'}`}>
+        {renderSidebarContent(false)}
+      </aside>
+
+      <div
+        className={`md:hidden fixed inset-0 z-[60] transition ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        aria-hidden={!mobileOpen}>
+        <button
+          type="button"
+          aria-label={t('sidebar.hideSidebar')}
+          onClick={handleMobileClose}
+          className={`absolute inset-0 bg-secondary/25 transition-opacity dark:bg-black/45 ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
+        />
+        <aside
+          className={`border-stroke-3 dark:border-stroke-7 bg-background-2 dark:bg-background-8 text-secondary dark:text-accent relative h-full w-[85%] max-w-[320px] border-r shadow-1 transition-transform duration-300 ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+          {renderSidebarContent(true)}
+        </aside>
+      </div>
+    </>
   );
 };
 
