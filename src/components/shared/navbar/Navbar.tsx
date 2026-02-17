@@ -1,6 +1,6 @@
 'use client';
 import RevealAnimation from '@/components/animation/RevealAnimation';
-import LinkButton from '@/components/ui/button/Button';
+import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 import { useNavbarScroll } from '@/hooks/useScrollHeader';
 import { cn } from '@/utils/cn';
 import logoDark from '@public/images/shared/logo-dark.svg';
@@ -34,9 +34,10 @@ const Navbar = ({ showTopNav }: { showTopNav: boolean }) => {
             </Link>
           </div>
           <div className="flex items-center justify-center">
-            <LinkButton href="/signup" btnClass="btn-md-v2 btn-secondary-v2 border group-hover/btn-v2:btn-v2-white">
-              Get started
-            </LinkButton>
+            <LocaleSwitcher
+              compact
+              className="[&_select]:bg-secondary [&_select]:border-secondary [&_select]:text-accent [&_select]:h-10 [&_select]:rounded-full [&_select]:px-4 [&_select]:text-tagline-2 [&_select]:font-medium"
+            />
           </div>
         </div>
       </RevealAnimation>

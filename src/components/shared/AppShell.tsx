@@ -22,7 +22,7 @@ const AppShell = ({ children }: AppShellProps) => {
         <div className={isLandingRoute ? 'dark' : undefined}>
           {!isDashboardRoute && !isAuthRoute && <HeaderWrapper />}
           {children}
-          {!isDashboardRoute && !isAuthRoute && <Footer />}
+          {!isDashboardRoute && <Footer />}
         </div>
       </SmoothScrollProvider>
     </Suspense>

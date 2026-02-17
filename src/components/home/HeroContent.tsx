@@ -28,13 +28,6 @@ const HeroContent = () => {
             </LinkButton>
           </li>
         </RevealAnimation>
-        <RevealAnimation delay={0.5} direction="left" offset={50}>
-          <li>
-            <LinkButton href="/signup" btnClass="btn-xl-v2 btn-v2-white group-hover/btn-v2:btn-secondary-v2">
-              {t('landing.signup')}
-            </LinkButton>
-          </li>
-        </RevealAnimation>
       </ul>
     </div>
   );
