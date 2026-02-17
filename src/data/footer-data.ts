@@ -2,27 +2,27 @@ import { FooterData } from '@/interface';
 
 export const footerLinks: FooterData[] = [
   {
-    title: 'Company',
+    titleKey: 'footer.title.company',
     links: [
-      { label: 'About Us', href: '/about' },
-      { label: 'Contact Us', href: '/contact-us' },
+      { labelKey: 'footer.link.about', href: '/about' },
+      { labelKey: 'footer.link.contact', href: '/contact-us' },
     ],
   },
   {
-    title: 'Support',
+    titleKey: 'footer.title.support',
     links: [
-      { label: 'FAQ', href: '/faq' },
-      { label: 'Tutorial', href: '/tutorial' },
-      { label: 'Support', href: '/support' },
+      { labelKey: 'footer.link.faq', href: '/faq' },
+      { labelKey: 'footer.link.tutorial', href: '/tutorial' },
+      { labelKey: 'footer.link.support', href: '/support' },
     ],
   },
   {
-    title: 'Legal Policies',
+    titleKey: 'footer.title.legal',
     links: [
-      { label: 'Terms & Conditions', href: '/terms-conditions' },
-      { label: 'Privacy Policy', href: '/privacy-policy' },
-      { label: 'Refund Policy', href: '/refund-policy' },
-      { label: 'GDPR Compliance', href: '/gdpr' },
+      { labelKey: 'footer.link.terms', href: '/terms-conditions' },
+      { labelKey: 'footer.link.privacy', href: '/privacy-policy' },
+      { labelKey: 'footer.link.refund', href: '/refund-policy' },
+      { labelKey: 'footer.link.gdpr', href: '/gdpr' },
     ],
   },
 ];

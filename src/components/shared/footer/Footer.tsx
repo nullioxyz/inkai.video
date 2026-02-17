@@ -1,5 +1,9 @@
+'use client';
+
 import RevealAnimation from '@/components/animation/RevealAnimation';
 import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
+import { useLocale } from '@/context/LocaleContext';
+import { MessageKey } from '@/i18n/messages';
 import { footerLinks } from '@/data/footer-data';
 import { cn } from '@/utils/cn';
 import instagram from '@public/images/icons/instagram.svg';
@@ -13,6 +17,7 @@ import FooterDivider from './FooterDivider';
 
 const Footer = ({ className }: { className?: string }) => {
   const currentYear = new Date().getFullYear();
+  const { t } = useLocale();
 
   return (
     <footer className={cn('bg-secondary dark:bg-background-8 relative z-0 overflow-hidden', className)}>
@@ -30,8 +35,7 @@ const Footer = ({ className }: { className?: string }) => {
                   <Image src={darkLogo} alt="NextSass Logo" />
                 </figure>
                 <p className="text-accent/60 text-tagline-1 mt-4 mb-7 font-normal">
-                  Transforme referências em vídeos para apresentar projetos de tatuagem com mais clareza, impacto visual
-                  e confiança na aprovação do cliente.
+                  {t('footer.description')}
                 </p>
                 <div className="flex items-center gap-3">
                   <Link target="_blank" href="https://www.instagram.com">
@@ -53,16 +57,16 @@ const Footer = ({ className }: { className?: string }) => {
             </div>
           </RevealAnimation>
           <div className="col-span-12 grid grid-cols-12 gap-x-0 gap-y-8 xl:col-span-8">
-            {footerLinks.map(({ title, links }, index) => (
-              <div className="col-span-12 md:col-span-4" key={title}>
+            {footerLinks.map(({ titleKey, links }, index) => (
+              <div className="col-span-12 md:col-span-4" key={titleKey}>
                 <RevealAnimation delay={0.2 + index * 0.1}>
                   <div className="space-y-8">
-                    <p className="sm:text-heading-6 text-tagline-1 text-primary-50 font-normal">{title}</p>
+                    <p className="sm:text-heading-6 text-tagline-1 text-primary-50 font-normal">{t(titleKey as MessageKey)}</p>
                     <ul className="space-y-5">
-                      {links.map(({ label, href }) => (
-                        <li key={label}>
+                      {links.map(({ labelKey, href }) => (
+                        <li key={labelKey}>
                           <Link href={href} className="footer-link">
-                            {label}
+                            {t(labelKey as MessageKey)}
                           </Link>
                         </li>
                       ))}

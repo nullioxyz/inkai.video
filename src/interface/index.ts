@@ -108,8 +108,8 @@ export interface FooterOneData {
   links: { label: string; href: string }[];
 }
 export interface FooterData {
-  title: string;
-  links: { label: string; href: string }[];
+  titleKey: string;
+  links: { labelKey: string; href: string }[];
 }
 
 // customer markdown
