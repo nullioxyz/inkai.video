@@ -13,7 +13,6 @@ export const footerLinks: FooterData[] = [
     links: [
       { labelKey: 'footer.link.faq', href: '/faq' },
       { labelKey: 'footer.link.tutorial', href: '/tutorial' },
-      { labelKey: 'footer.link.support', href: '/support' },
     ],
   },
   {

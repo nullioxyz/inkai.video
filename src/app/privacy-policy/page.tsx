@@ -1,27 +1,39 @@
-import PrivacyContent from '@/components/privacy/PrivacyContent';
-import CTAV1 from '@/components/shared/cta/CTAV1';
-import { defaultMetadata } from '@/utils/generateMetaData';
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: 'Privacy Policy - AI Application || NextSaaS',
-};
+import { useLocale } from '@/context/LocaleContext';
 
-const page = () => {
+const PrivacyPolicyPage = () => {
+  const { t } = useLocale();
+
+  const sections = [
+    { title: t('privacy.s1.title'), text: t('privacy.s1.text') },
+    { title: t('privacy.s2.title'), text: t('privacy.s2.text') },
+    { title: t('privacy.s3.title'), text: t('privacy.s3.text') },
+    { title: t('privacy.s4.title'), text: t('privacy.s4.text') },
+    { title: t('privacy.s5.title'), text: t('privacy.s5.text') },
+  ];
+
   return (
-    <main className="bg-background-3 dark:bg-background-7">
-      <PrivacyContent />
-      <CTAV1
-        className="dark:bg-background-5 bg-white"
-        badgeClass="badge-yellow-v2"
-        badgeText="Get Started"
-        ctaHeading="Ready to start earning with NextSaaS?"
-        description="If you have any questions, feel free to reach out to our team."
-        ctaBtnText="Get started"
-      />
+    <main className="bg-background-3 dark:bg-background-7 min-h-screen">
+      <section className="main-container px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl space-y-8">
+          <header className="space-y-4">
+            <h1 className="text-heading-3 text-secondary dark:text-accent">{t('privacy.title')}</h1>
+            <p className="text-tagline-1 text-secondary/70 dark:text-accent/70">{t('privacy.subtitle')}</p>
+          </header>
+
+          <div className="space-y-6">
+            {sections.map((section) => (
+              <article key={section.title} className="space-y-2">
+                <h2 className="text-heading-6 text-secondary dark:text-accent">{section.title}</h2>
+                <p className="text-tagline-1 text-secondary/80 dark:text-accent/80">{section.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
   );
 };
 
-export default page;
+export default PrivacyPolicyPage;
