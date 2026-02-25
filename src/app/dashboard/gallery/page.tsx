@@ -1,11 +1,15 @@
+'use client';
+
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
 import GalleryPageContent from '@/components/dashboard/pages/GalleryPageContent';
-import { DASHBOARD_VIDEO_LIBRARY } from '@/data/dashboard/videos';
+import { useDashboard } from '@/context/dashboard-context';
 
 const GalleryPage = () => {
+  const { videos, loadingJobs } = useDashboard();
+
   return (
-    <DashboardContentShell videos={DASHBOARD_VIDEO_LIBRARY}>
-      <GalleryPageContent videos={DASHBOARD_VIDEO_LIBRARY} />
+    <DashboardContentShell videos={videos}>
+      <GalleryPageContent videos={videos} loading={loadingJobs} />
     </DashboardContentShell>
   );
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useDashboard } from '@/context/dashboard-context';
 import { VideoJobItem } from '@/types/dashboard';
 import mainLogo from '@public/images/shared/main-logo.svg';
 import logo from '@public/images/shared/logo.svg';
@@ -8,7 +9,7 @@ import logoDark from '@public/images/shared/logo-dark.svg';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode } from 'react';
+import { KeyboardEvent, ReactNode, useState } from 'react';
 
 interface SidebarMenuItem {
   key: string;
@@ -24,6 +25,7 @@ interface DashboardSidebarProps {
   selectedVideoId: string | null;
   onSelectVideo: (videoId: string) => void;
   onCreateNewVideo: () => void;
+  onRenameVideo: (videoId: string, title: string) => Promise<void>;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -116,11 +118,17 @@ const DashboardSidebar = ({
   selectedVideoId,
   onSelectVideo,
   onCreateNewVideo,
+  onRenameVideo,
   mobileOpen = false,
   onMobileClose,
 }: DashboardSidebarProps) => {
   const pathname = usePathname();
   const { t, intlLocale } = useLocale();
+  const { logout } = useDashboard();
+  const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [savingRenameVideoId, setSavingRenameVideoId] = useState<string | null>(null);
 
   const isMenuItemActive = (menuKey: string, href: string) => {
     if (menuKey === 'gallery') {
@@ -136,6 +144,55 @@ const DashboardSidebar = ({
 
   const handleMobileClose = () => {
     onMobileClose?.();
+  };
+
+  const beginRename = (video: VideoJobItem) => {
+    setRenameError(null);
+    setEditingVideoId(video.id);
+    setEditingTitle(video.title);
+  };
+
+  const cancelRename = () => {
+    setEditingVideoId(null);
+    setEditingTitle('');
+    setRenameError(null);
+  };
+
+  const submitRename = async (video: VideoJobItem) => {
+    const normalized = editingTitle.trim();
+    if (!normalized) {
+      setRenameError(t('sidebar.renameErrorEmpty'));
+      return;
+    }
+
+    if (normalized === video.title) {
+      cancelRename();
+      return;
+    }
+
+    setSavingRenameVideoId(video.id);
+    setRenameError(null);
+    try {
+      await onRenameVideo(video.id, normalized);
+      cancelRename();
+    } catch {
+      setRenameError(t('sidebar.renameErrorGeneric'));
+    } finally {
+      setSavingRenameVideoId(null);
+    }
+  };
+
+  const onRenameInputKeyDown = (event: KeyboardEvent<HTMLInputElement>, video: VideoJobItem) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void submitRename(video);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelRename();
+    }
   };
 
   const renderSidebarContent = (isMobile: boolean) => {
@@ -213,6 +270,9 @@ const DashboardSidebar = ({
                 key={item.key}
                 href={item.href}
                 onClick={() => {
+                  if (item.key === 'logout') {
+                    logout();
+                  }
                   if (isMobile) {
                     handleMobileClose();
                   }
@@ -240,12 +300,25 @@ const DashboardSidebar = ({
             ) : (
               videos.map((video) => {
                 const selected = video.id === selectedVideoId;
+                const isEditing = editingVideoId === video.id;
+                const isSavingRename = savingRenameVideoId === video.id;
 
                 return (
-                  <button
+                  <div
                     key={video.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
+                      onSelectVideo(video.id);
+                      if (isMobile) {
+                        handleMobileClose();
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') {
+                        return;
+                      }
+                      event.preventDefault();
                       onSelectVideo(video.id);
                       if (isMobile) {
                         handleMobileClose();
@@ -268,7 +341,60 @@ const DashboardSidebar = ({
 
                       {!isCollapsed && (
                         <div className="min-w-0 flex-1 space-y-1">
-                          <p className="truncate text-sm text-secondary dark:text-accent">{video.title}</p>
+                          {isEditing ? (
+                            <div className="space-y-1.5" onClick={(event) => event.stopPropagation()}>
+                              <input
+                                type="text"
+                                value={editingTitle}
+                                onChange={(event) => setEditingTitle(event.target.value)}
+                                onKeyDown={(event) => onRenameInputKeyDown(event, video)}
+                                autoFocus
+                                maxLength={255}
+                                className="bg-background-1 dark:bg-background-9 border-stroke-3 dark:border-stroke-7 w-full rounded-sm border px-2 py-1 text-sm text-secondary dark:text-accent outline-none"
+                              />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void submitRename(video);
+                                  }}
+                                  disabled={isSavingRename}
+                                  className="text-tagline-3 bg-secondary text-accent dark:bg-accent dark:text-secondary rounded-sm px-2 py-1 disabled:cursor-not-allowed disabled:opacity-60">
+                                  {t('sidebar.renameSave')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    cancelRename();
+                                  }}
+                                  disabled={isSavingRename}
+                                  className="text-tagline-3 border-stroke-3 dark:border-stroke-7 rounded-sm border px-2 py-1 text-secondary/70 dark:text-accent/70 disabled:cursor-not-allowed disabled:opacity-60">
+                                  {t('sidebar.renameCancel')}
+                                </button>
+                              </div>
+                              {renameError ? <p className="text-tagline-3 text-ns-red">{renameError}</p> : null}
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-2">
+                              <p className="truncate text-sm text-secondary dark:text-accent">{video.title}</p>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  beginRename(video);
+                                }}
+                                className="text-secondary/50 hover:text-secondary dark:text-accent/50 dark:hover:text-accent shrink-0 transition"
+                                aria-label={t('sidebar.renameVideo')}
+                                title={t('sidebar.renameVideo')}>
+                                <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                  <path d="m4 20 4.2-.7L19 8.5a1.7 1.7 0 0 0 0-2.4l-1.1-1.1a1.7 1.7 0 0 0-2.4 0L4.8 15.8 4 20Z" />
+                                  <path d="m13.5 6.5 4 4" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
                           <p className="text-tagline-3 flex items-center gap-1.5 text-secondary/50 dark:text-accent/50">
                             <span className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[video.status]}`} />
                             <span>{t(STATUS_LABEL_KEY[video.status])}</span>
@@ -280,7 +406,7 @@ const DashboardSidebar = ({
 
                       {isCollapsed && <span className={`mx-auto mt-1 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[video.status]}`} />}
                     </div>
-                  </button>
+                  </div>
                 );
               })
             )}

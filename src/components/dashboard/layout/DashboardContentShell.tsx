@@ -1,6 +1,7 @@
 'use client';
 
-import { DASHBOARD_VIDEO_LIBRARY } from '@/data/dashboard/videos';
+import { useDashboard } from '@/context/dashboard-context';
+import { mustRedirectToFirstLoginReset } from '@/modules/auth/application/first-login-guard';
 import { VideoJobItem } from '@/types/dashboard';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
@@ -14,9 +15,11 @@ interface DashboardContentShellProps {
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'inkai-dashboard-sidebar-collapsed';
 
-const DashboardContentShell = ({ children, videos = DASHBOARD_VIDEO_LIBRARY, selectedVideoId = null }: DashboardContentShellProps) => {
+const DashboardContentShell = ({ children, videos, selectedVideoId = null }: DashboardContentShellProps) => {
+  const { videos: contextVideos, token, isHydrated, renameVideo, mustResetPassword } = useDashboard();
   const router = useRouter();
   const pathname = usePathname();
+  const resolvedVideos = videos ?? contextVideos;
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -34,6 +37,22 @@ const DashboardContentShell = ({ children, videos = DASHBOARD_VIDEO_LIBRARY, sel
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (isHydrated && !token) {
+      router.replace('/login');
+    }
+  }, [isHydrated, router, token]);
+
+  useEffect(() => {
+    if (!isHydrated || !token) {
+      return;
+    }
+
+    if (mustRedirectToFirstLoginReset(mustResetPassword, pathname)) {
+      router.replace('/first-login/reset-password');
+    }
+  }, [isHydrated, mustResetPassword, pathname, router, token]);
 
   const handleToggleSidebar = () => {
     setSidebarCollapsed((prev) => {
@@ -53,7 +72,7 @@ const DashboardContentShell = ({ children, videos = DASHBOARD_VIDEO_LIBRARY, sel
         <DashboardSidebar
           collapsed={sidebarCollapsed}
           onToggle={handleToggleSidebar}
-          videos={videos}
+          videos={resolvedVideos}
           selectedVideoId={selectedVideoId}
           onSelectVideo={(videoId) => {
             router.push(`/dashboard/video/${videoId}`);
@@ -63,6 +82,7 @@ const DashboardContentShell = ({ children, videos = DASHBOARD_VIDEO_LIBRARY, sel
             router.push('/dashboard');
             setMobileMenuOpen(false);
           }}
+          onRenameVideo={renameVideo}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
         />

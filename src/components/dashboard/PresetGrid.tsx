@@ -9,9 +9,11 @@ interface PresetGridProps {
 
 const PresetGrid = ({ presets, selectedPresetId, onSelectPreset }: PresetGridProps) => {
   return (
-    <div className="mx-auto grid w-full max-w-[1040px] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="mx-auto w-full max-w-[980px] columns-3 gap-1.5 sm:columns-4 xl:columns-6">
       {presets.map((preset) => (
-        <PresetCard key={preset.id} preset={preset} selected={selectedPresetId === preset.id} onSelect={onSelectPreset} />
+        <div key={preset.id} className="mb-1.5 break-inside-avoid">
+          <PresetCard preset={preset} selected={selectedPresetId === preset.id} onSelect={onSelectPreset} />
+        </div>
       ))}
     </div>
   );

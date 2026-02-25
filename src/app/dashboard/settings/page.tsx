@@ -1,10 +1,14 @@
+'use client';
+
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
 import SettingsPageContent from '@/components/dashboard/pages/SettingsPageContent';
-import { DASHBOARD_VIDEO_LIBRARY } from '@/data/dashboard/videos';
+import { useDashboard } from '@/context/dashboard-context';
 
 const SettingsPage = () => {
+  const { videos } = useDashboard();
+
   return (
-    <DashboardContentShell videos={DASHBOARD_VIDEO_LIBRARY}>
+    <DashboardContentShell videos={videos}>
       <SettingsPageContent />
     </DashboardContentShell>
   );

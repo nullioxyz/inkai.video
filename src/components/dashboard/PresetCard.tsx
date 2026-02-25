@@ -1,8 +1,10 @@
 'use client';
 
 import { useLocale } from '@/context/LocaleContext';
+import { resolveCardRatio } from '@/modules/videos/application/card-layout';
 import { PresetItem } from '@/types/dashboard';
 import Image from 'next/image';
+import { useRef, useState } from 'react';
 
 interface PresetCardProps {
   preset: PresetItem;
@@ -12,6 +14,10 @@ interface PresetCardProps {
 
 const PresetCard = ({ preset, selected, onSelect }: PresetCardProps) => {
   const { t, locale } = useLocale();
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
 
   const localizedPresetText = () => {
     if (locale === 'pt-BR') {
@@ -58,39 +64,87 @@ const PresetCard = ({ preset, selected, onSelect }: PresetCardProps) => {
   };
 
   const text = localizedPresetText();
+  const hasPreviewVideo = Boolean(preset.previewVideoUrl);
+  const cardRatio = resolveCardRatio(preset.aspectRatio);
+
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (!hasPreviewVideo || !previewVideoRef.current) {
+      return;
+    }
+
+    const video = previewVideoRef.current;
+    video.currentTime = 0;
+    void video.play().catch(() => {
+      // Ignore autoplay blocking errors.
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (!previewVideoRef.current) {
+      return;
+    }
+
+    const video = previewVideoRef.current;
+    video.pause();
+    video.currentTime = 0;
+  };
 
   return (
     <button
       type="button"
       onClick={() => onSelect(preset.id)}
-      className={`border-stroke-3 dark:border-stroke-7 group cursor-pointer overflow-hidden rounded-[14px] border text-left transition ${
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`border-stroke-3 dark:border-stroke-7 group w-full cursor-pointer overflow-hidden rounded-[12px] border text-left transition ${
         selected
           ? 'border-background-7 bg-background-7 shadow-[0_8px_24px_rgba(26,26,28,0.28)] ring-1 ring-secondary/30 dark:border-background-1 dark:bg-background-1 dark:shadow-[0_8px_24px_rgba(252,252,252,0.14)] dark:ring-accent/30'
           : 'bg-transparent hover:border-primary-300 dark:hover:border-primary-400'
       }`}>
-      <div className="relative aspect-video overflow-hidden">
+      <div className="relative overflow-hidden" style={{ aspectRatio: cardRatio }}>
+        {!imageLoaded && <div className="absolute inset-0 animate-pulse bg-background-3 dark:bg-background-7" aria-hidden />}
         <Image
-          src={preset.imageSrc}
+          src={imageFailed ? '/images/ns-img-323.png' : preset.imageSrc}
           alt={text.name}
           fill
-          className="object-cover transition duration-300 group-hover:scale-105"
+          className={`object-cover transition duration-300 ${
+            imageLoaded ? (isHovering && hasPreviewVideo ? 'opacity-0' : 'opacity-100 group-hover:scale-105') : 'opacity-0'
+          }`}
           sizes="(max-width: 768px) 100vw, 33vw"
+          onLoad={() => setImageLoaded(true)}
+          onLoadingComplete={() => setImageLoaded(true)}
+          onError={() => {
+            setImageFailed(true);
+            setImageLoaded(true);
+          }}
         />
-        <div className="bg-secondary/65 absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
-          <span className="text-tagline-3 rounded-[8px] border border-white/40 px-3 py-1 font-medium text-white">
-            {t('preset.preview')}
-          </span>
-        </div>
+        {hasPreviewVideo && (
+          <video
+            ref={previewVideoRef}
+            src={preset.previewVideoUrl ?? undefined}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className={`absolute inset-0 h-full w-full object-cover transition duration-300 ${isHovering ? 'opacity-100' : 'opacity-0'}`}
+            aria-hidden
+          />
+        )}
+        {!hasPreviewVideo && (
+          <div className="bg-secondary/65 absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+            <span className="text-tagline-3 rounded-[8px] border border-white/40 px-3 py-1 font-medium text-white">
+              {t('preset.preview')}
+            </span>
+          </div>
+        )}
         {selected && (
           <div className="absolute inset-0 bg-white/10 dark:bg-secondary/10" />
         )}
       </div>
-      <div className="space-y-2 p-4">
-        <p className={`text-tagline-1 font-medium ${selected ? 'text-accent dark:text-secondary' : 'text-secondary dark:text-accent'}`}>
+      <div className="p-1.5">
+        <p className={`truncate text-[11px] font-medium ${selected ? 'text-accent dark:text-secondary' : 'text-secondary dark:text-accent'}`}>
           {text.name}
-        </p>
-        <p className={`text-tagline-2 ${selected ? 'text-accent/75 dark:text-secondary/70' : 'text-secondary/60 dark:text-accent/60'}`}>
-          {text.description}
         </p>
       </div>
     </button>

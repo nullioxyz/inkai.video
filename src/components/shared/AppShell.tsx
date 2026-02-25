@@ -14,7 +14,7 @@ const AppShell = ({ children }: AppShellProps) => {
   const pathname = usePathname();
   const isDashboardRoute = pathname.startsWith('/dashboard');
   const isLandingRoute = pathname === '/';
-  const isAuthRoute = pathname.startsWith('/login');
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/first-login') || pathname.startsWith('/auth/');
 
   return (
     <Suspense>

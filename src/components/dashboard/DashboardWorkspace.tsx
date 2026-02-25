@@ -1,8 +1,10 @@
 'use client';
 
-import { DASHBOARD_VIDEO_LIBRARY } from '@/data/dashboard/videos';
-import { VideoJobItem } from '@/types/dashboard';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDashboard } from '@/context/dashboard-context';
+import { mustRedirectToFirstLoginReset } from '@/modules/auth/application/first-login-guard';
+import { PresetItem } from '@/types/dashboard';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import DashboardSidebar from './DashboardSidebar';
 import VideoDetailsPanel from './VideoDetailsPanel';
 import VideoGenerationDashboard from './VideoGenerationDashboard';
@@ -10,6 +12,10 @@ import VideoGenerationDashboard from './VideoGenerationDashboard';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'inkai-dashboard-sidebar-collapsed';
 
 const DashboardWorkspace = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { token, isHydrated, mustResetPassword, videos, createVideo, renameVideo, presets, presetCategories, loadingPresets, presetsError, loadingJobs, jobsError } =
+    useDashboard();
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -22,12 +28,26 @@ const DashboardWorkspace = () => {
       return false;
     }
   });
-  const [videos, setVideos] = useState<VideoJobItem[]>(DASHBOARD_VIDEO_LIBRARY);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const generationTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [isReturningToCreate, setIsReturningToCreate] = useState(false);
   const [createViewAnimationKey, setCreateViewAnimationKey] = useState(0);
+
+  useEffect(() => {
+    if (isHydrated && !token) {
+      router.replace('/login');
+    }
+  }, [isHydrated, router, token]);
+
+  useEffect(() => {
+    if (!isHydrated || !token) {
+      return;
+    }
+
+    if (mustRedirectToFirstLoginReset(mustResetPassword, pathname)) {
+      router.replace('/first-login/reset-password');
+    }
+  }, [isHydrated, mustResetPassword, pathname, router, token]);
 
   const selectedVideo = useMemo(() => {
     if (!selectedVideoId) {
@@ -36,35 +56,22 @@ const DashboardWorkspace = () => {
     return videos.find((video) => video.id === selectedVideoId) ?? null;
   }, [selectedVideoId, videos]);
 
-  useEffect(() => {
-    return () => {
-      generationTimersRef.current.forEach((timer) => clearTimeout(timer));
-      generationTimersRef.current.clear();
-    };
-  }, []);
-
-  const handleGenerateVideo = (payload: { title: string; imageSrc: string; format: string; prompt: string }) => {
-    const id = `video-${Date.now()}`;
-
-    const processingVideo: VideoJobItem = {
-      id,
+  const handleGenerateVideo = async (payload: {
+    title: string;
+    imageFile: File;
+    imageSrc: string;
+    format: string;
+    prompt: string;
+    preset: PresetItem;
+  }) => {
+    const createdVideo = await createVideo({
       title: payload.title,
+      imageFile: payload.imageFile,
       imageSrc: payload.imageSrc,
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      status: 'processing',
-      format: payload.format,
-      prompt: payload.prompt,
-      createdAt: new Date().toISOString(),
-    };
+      preset: payload.preset,
+    });
 
-    setVideos((prev) => [processingVideo, ...prev]);
-
-    const timer = setTimeout(() => {
-      setVideos((prev) => prev.map((video) => (video.id === id ? { ...video, status: 'completed' } : video)));
-      generationTimersRef.current.delete(id);
-    }, 3200);
-
-    generationTimersRef.current.set(id, timer);
+    return createdVideo;
   };
 
   const handleCreateNewVideo = () => {
@@ -93,8 +100,8 @@ const DashboardWorkspace = () => {
   };
 
   return (
-    <main className="bg-background-3 dark:bg-background-7 min-h-screen">
-      <div className="flex min-h-screen w-full">
+    <main className="bg-background-3 dark:bg-background-7 h-dvh overflow-hidden">
+      <div className="flex h-full w-full overflow-hidden">
         <DashboardSidebar
           collapsed={sidebarCollapsed}
           onToggle={handleToggleSidebar}
@@ -108,11 +115,12 @@ const DashboardWorkspace = () => {
             handleCreateNewVideo();
             setMobileMenuOpen(false);
           }}
+          onRenameVideo={renameVideo}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
         />
 
-        <div className="flex min-h-screen flex-1 min-w-0 flex-col">
+        <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-hidden">
           <div className="bg-background-3/90 dark:bg-background-7/90 border-stroke-3 dark:border-stroke-7 sticky top-0 z-30 flex items-center justify-between border-b px-3 py-3 backdrop-blur-sm md:hidden">
             <button
               type="button"
@@ -129,13 +137,28 @@ const DashboardWorkspace = () => {
             <span className="w-9" aria-hidden />
           </div>
 
-          <div className="flex-1 min-h-0 p-3 sm:p-4 md:p-8 lg:p-10">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3 sm:p-4 md:p-8 lg:p-10">
+            {loadingJobs && !selectedVideo && videos.length === 0 ? (
+              <p className="text-tagline-2 text-secondary/70 dark:text-accent/70 text-center">Carregando vídeos...</p>
+            ) : null}
+            {jobsError && !selectedVideo ? <p className="text-tagline-2 text-ns-red text-center mb-4">{jobsError}</p> : null}
             {selectedVideo ? (
-              <div className={`transition-all duration-300 ${isReturningToCreate ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}>
-                <VideoDetailsPanel video={selectedVideo} onCreateNewVideo={handleCreateNewVideo} />
+              <div className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ${isReturningToCreate ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <VideoDetailsPanel video={selectedVideo} onCreateNewVideo={handleCreateNewVideo} />
+                </div>
               </div>
             ) : (
-              <VideoGenerationDashboard onGenerateVideo={handleGenerateVideo} animateInTrigger={createViewAnimationKey} />
+              <div className="min-h-0 flex-1">
+                <VideoGenerationDashboard
+                  presets={presets}
+                  presetCategories={presetCategories}
+                  loadingPresets={loadingPresets}
+                  presetsError={presetsError}
+                  onGenerateVideo={handleGenerateVideo}
+                  animateInTrigger={createViewAnimationKey}
+                />
+              </div>
             )}
           </div>
         </div>

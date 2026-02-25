@@ -5,7 +5,7 @@ import { PresetCategory } from '@/types/dashboard';
 
 interface PresetCategoryFilterProps {
   categories: PresetCategory[];
-  activeCategory: PresetCategory;
+  activeCategory: PresetCategory | '';
   onChange: (category: PresetCategory) => void;
 }
 
@@ -28,7 +28,11 @@ const PresetCategoryFilter = ({ categories, activeCategory, onChange }: PresetCa
     if (category === 'antebraço') {
       return t('preset.category.forearm');
     }
-    return t('preset.category.chest');
+    if (category === 'peitoral') {
+      return t('preset.category.chest');
+    }
+
+    return category.replaceAll('-', ' ');
   };
 
   return (
