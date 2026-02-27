@@ -18,8 +18,12 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: '/storage/:path*',
-        destination: `${normalizedBase}/storage/:path*`,
+        source: '/image/:token/image',
+        destination: `${normalizedBase}/image/:token/image`,
+      },
+      {
+        source: '/video/:token/:filename*',
+        destination: `${normalizedBase}/video/:token/:filename*`,
       },
     ];
   },

@@ -1,17 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { mapPresetToViewModel } from '../mappers';
 
 describe('preset mapper', () => {
-  const originalFrontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
-
-  afterEach(() => {
-    if (originalFrontendUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_FRONTEND_URL;
-      return;
-    }
-    process.env.NEXT_PUBLIC_FRONTEND_URL = originalFrontendUrl;
-  });
-
   it('maps backend preset into view model', () => {
     const preset = mapPresetToViewModel({
       id: 10,
@@ -20,8 +10,8 @@ describe('preset mapper', () => {
       prompt: 'Prompt',
       negative_prompt: null,
       duration_seconds: 5,
-      preview_image_url: 'https://cdn.example/preset.jpg',
-      preview_video_url: null,
+      preview_image_url: 'https://inkai.video/image/preset-token/image',
+      preview_video_url: 'https://inkai.video/video/preset-token/preview.mp4',
       aspect_ratio: '9:16',
       tags: [{ id: 1, name: 'Anime', slug: 'anime' }],
       created_at: null,
@@ -31,7 +21,8 @@ describe('preset mapper', () => {
     expect(preset.id).toBe('10');
     expect(preset.backendPresetId).toBe(10);
     expect(preset.category).toBe('anime');
-    expect(preset.imageSrc).toBe('https://cdn.example/preset.jpg');
+    expect(preset.imageSrc).toBe('https://inkai.video/image/preset-token/image');
+    expect(preset.previewVideoUrl).toBe('https://inkai.video/video/preset-token/preview.mp4');
     expect(preset.tags[0].slug).toBe('anime');
   });
 
@@ -56,9 +47,7 @@ describe('preset mapper', () => {
     expect(preset.tags).toEqual([]);
   });
 
-  it('resolves legacy relative media urls', () => {
-    process.env.NEXT_PUBLIC_FRONTEND_URL = 'https://app.inkai.ai';
-
+  it('keeps legacy relative media urls unchanged', () => {
     const preset = mapPresetToViewModel({
       id: 12,
       default_model_id: 2,
@@ -74,7 +63,7 @@ describe('preset mapper', () => {
       updated_at: null,
     });
 
-    expect(preset.imageSrc).toBe('https://app.inkai.ai/storage/preset.jpg');
-    expect(preset.previewVideoUrl).toBe('https://app.inkai.ai/storage/preset.mp4');
+    expect(preset.imageSrc).toBe('/storage/preset.jpg');
+    expect(preset.previewVideoUrl).toBe('/storage/preset.mp4');
   });
 });

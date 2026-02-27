@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRequest } from '../client';
 import { institutionalApi, seoApi } from '../public-content';
 
@@ -7,11 +7,8 @@ vi.mock('../client', () => ({
 }));
 
 describe('public content api', () => {
-  const originalFrontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
-
   beforeEach(() => {
     vi.mocked(apiRequest).mockReset();
-    process.env.NEXT_PUBLIC_FRONTEND_URL = 'https://app.inkai.ai';
   });
 
   it('normalizes institutional list images urls', async () => {
@@ -26,7 +23,7 @@ describe('public content api', () => {
           slug: 'about',
           active: true,
           images: [
-            { id: 1, name: 'Hero', url: '/storage/hero.jpg' },
+            { id: 1, name: 'Hero', url: 'https://inkai.video/image/seo-token/image' },
             { id: 2, name: 'CDN', url: 'https://cdn.example.com/cover.jpg' },
           ],
           created_at: null,
@@ -37,7 +34,7 @@ describe('public content api', () => {
 
     const result = await institutionalApi.list('en');
 
-    expect(result[0].images[0].url).toBe('https://app.inkai.ai/storage/hero.jpg');
+    expect(result[0].images[0].url).toBe('https://inkai.video/image/seo-token/image');
     expect(result[0].images[1].url).toBe('https://cdn.example.com/cover.jpg');
   });
 
@@ -55,7 +52,7 @@ describe('public content api', () => {
         twitter_title: null,
         twitter_description: null,
         images: [
-          { id: 1, name: 'Cover', url: '/storage/cover.jpg' },
+          { id: 1, name: 'Cover', url: 'https://inkai.video/image/cover-token/image' },
           { id: 2, name: 'Invalid', url: '   ' },
         ],
         active: true,
@@ -66,15 +63,7 @@ describe('public content api', () => {
 
     const result = await seoApi.show('home', 'en');
 
-    expect(result.images[0].url).toBe('https://app.inkai.ai/storage/cover.jpg');
+    expect(result.images[0].url).toBe('https://inkai.video/image/cover-token/image');
     expect(result.images[1].url).toBe('');
-  });
-
-  afterAll(() => {
-    if (originalFrontendUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_FRONTEND_URL;
-      return;
-    }
-    process.env.NEXT_PUBLIC_FRONTEND_URL = originalFrontendUrl;
   });
 });

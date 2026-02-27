@@ -75,7 +75,7 @@ const normalizeMediaCollection = <T extends { images: Array<{ id: number; url: s
     ...payload,
     images: payload.images.map((image) => ({
       ...image,
-      url: resolveMediaUrl(image.url, { allowRelative: true }) ?? '',
+      url: resolveMediaUrl(image.url) ?? '',
     })),
   };
 };

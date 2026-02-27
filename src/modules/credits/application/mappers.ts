@@ -25,7 +25,7 @@ export const mapCreditVideoGenerationToViewModel = (entry: CreditVideoGeneration
     predictionStatus: entry.prediction?.status ?? null,
     predictionErrorCode: entry.prediction?.error_code ?? null,
     predictionErrorMessage: entry.prediction?.error_message ?? null,
-    outputVideoUrl: resolveMediaUrl(entry.prediction?.output_video_url, { allowRelative: true }),
+    outputVideoUrl: resolveMediaUrl(entry.prediction?.output_video_url),
     creditsDebited: entry.credits_debited,
     creditsRefunded: entry.credits_refunded,
     creditsUsed: entry.credits_used,

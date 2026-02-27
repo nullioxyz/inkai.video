@@ -7,7 +7,7 @@ import VideoPlaybackSurface from '../VideoPlaybackSurface';
 const baseVideo: VideoJobItem = {
   id: '1',
   title: 'Video title',
-  imageSrc: 'https://app.inkai.ai/storage/start.jpg',
+  imageSrc: 'https://inkai.video/image/tkn-start/image',
   videoUrl: '',
   status: 'completed',
   format: '9:16',
@@ -47,10 +47,10 @@ describe('VideoPlaybackSurface', () => {
   it('renders playback using frontend absolute url', () => {
     const html = renderSurface({
       ...baseVideo,
-      videoUrl: 'https://app.inkai.ai/storage/output.mp4',
+      videoUrl: 'https://inkai.video/video/tkn-output/output.mp4',
     });
 
-    expect(html).toContain('https://app.inkai.ai/storage/output.mp4');
+    expect(html).toContain('https://inkai.video/video/tkn-output/output.mp4');
     expect(html).toContain('<video');
   });
 
@@ -68,7 +68,7 @@ describe('VideoPlaybackSurface', () => {
     const html = renderSurface(baseVideo);
 
     expect(html).toContain('Video is not available for playback yet.');
-    expect(html).toContain('https://app.inkai.ai/storage/start.jpg');
+    expect(html).toContain('https://inkai.video/image/tkn-start/image');
   });
 
   it('renders playback error state when video fails to load', () => {
@@ -78,6 +78,6 @@ describe('VideoPlaybackSurface', () => {
     });
 
     expect(html).toContain('Video is unavailable right now.');
-    expect(html).toContain('https://app.inkai.ai/storage/start.jpg');
+    expect(html).toContain('https://inkai.video/image/tkn-start/image');
   });
 });

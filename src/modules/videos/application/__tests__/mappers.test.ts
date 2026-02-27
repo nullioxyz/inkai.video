@@ -1,17 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { mapJobToVideoItem, normalizeVideoStatus } from '../mappers';
 
 describe('video mapper', () => {
-  const originalFrontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
-
-  afterEach(() => {
-    if (originalFrontendUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_FRONTEND_URL;
-      return;
-    }
-    process.env.NEXT_PUBLIC_FRONTEND_URL = originalFrontendUrl;
-  });
-
   it('normalizes backend status', () => {
     expect(normalizeVideoStatus('done')).toBe('completed');
     expect(normalizeVideoStatus('cancelled')).toBe('canceled');
@@ -32,7 +22,7 @@ describe('video mapper', () => {
       mime_type: null,
       size_bytes: null,
       credit_debited: true,
-      start_image_url: 'https://example.com/image.png',
+      start_image_url: 'https://inkai.video/image/token-image/image',
       prediction: {
         id: 2,
         external_id: 'abc',
@@ -50,10 +40,10 @@ describe('video mapper', () => {
           {
             id: 7,
             kind: 'video',
-            path: 'https://example.com/path.mp4',
+            path: 'https://inkai.video/video/token-path/path.mp4',
             mime_type: null,
             size_bytes: null,
-            file_url: 'https://example.com/file.mp4',
+            file_url: 'https://inkai.video/video/token-file/file.mp4',
             created_at: null,
           },
         ],
@@ -64,14 +54,13 @@ describe('video mapper', () => {
       updated_at: null,
     });
 
-    expect(mapped.videoUrl).toBe('https://example.com/file.mp4');
+    expect(mapped.imageSrc).toBe('https://inkai.video/image/token-image/image');
+    expect(mapped.videoUrl).toBe('https://inkai.video/video/token-file/file.mp4');
     expect(mapped.status).toBe('completed');
     expect(mapped.title).toBe('Titulo customizado');
   });
 
-  it('resolves legacy relative urls with frontend base', () => {
-    process.env.NEXT_PUBLIC_FRONTEND_URL = 'https://app.inkai.ai';
-
+  it('keeps legacy relative urls unchanged when backend still returns them', () => {
     const mapped = mapJobToVideoItem({
       id: 2,
       preset_id: 1,
@@ -115,13 +104,11 @@ describe('video mapper', () => {
       updated_at: null,
     });
 
-    expect(mapped.imageSrc).toBe('https://app.inkai.ai/storage/start.png');
-    expect(mapped.videoUrl).toBe('https://app.inkai.ai/storage/playback.mp4');
+    expect(mapped.imageSrc).toBe('/storage/start.png');
+    expect(mapped.videoUrl).toBe('/storage/playback.mp4');
   });
 
   it('falls back to output path when playback/file urls are missing', () => {
-    process.env.NEXT_PUBLIC_FRONTEND_URL = 'https://app.inkai.ai';
-
     const mapped = mapJobToVideoItem({
       id: 3,
       preset_id: 1,
@@ -165,6 +152,6 @@ describe('video mapper', () => {
       updated_at: null,
     });
 
-    expect(mapped.videoUrl).toBe('https://app.inkai.ai/storage/fallback-path.mp4');
+    expect(mapped.videoUrl).toBe('/storage/fallback-path.mp4');
   });
 });

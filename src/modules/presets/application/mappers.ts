@@ -6,8 +6,8 @@ const fallbackPresetImage = '/images/ns-img-323.png';
 
 export const mapPresetToViewModel = (preset: BackendPreset): PresetItem => {
   const tags = preset.tags ?? [];
-  const previewImageUrl = resolveMediaUrl(preset.preview_image_url, { allowRelative: true });
-  const previewVideoUrl = resolveMediaUrl(preset.preview_video_url, { allowRelative: true });
+  const previewImageUrl = resolveMediaUrl(preset.preview_image_url);
+  const previewVideoUrl = resolveMediaUrl(preset.preview_video_url);
 
   return {
     id: String(preset.id),

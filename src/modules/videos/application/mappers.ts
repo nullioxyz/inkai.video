@@ -27,9 +27,9 @@ const resolveOutputUrl = (job: BackendJobResponse) => {
   const videoOutput = outputs.find((output) => output.kind === 'video');
 
   return (
-    resolveMediaUrl(videoOutput?.playback_url, { allowRelative: true }) ??
-    resolveMediaUrl(videoOutput?.file_url, { allowRelative: true }) ??
-    resolveMediaUrl(videoOutput?.path, { allowRelative: true }) ??
+    resolveMediaUrl(videoOutput?.playback_url) ??
+    resolveMediaUrl(videoOutput?.file_url) ??
+    resolveMediaUrl(videoOutput?.path) ??
     ''
   );
 };
@@ -39,7 +39,7 @@ export const mapJobToVideoItem = (job: BackendJobResponse): VideoJobItem => {
     id: String(job.id),
     inputId: job.id,
     title: job.title || job.original_filename || `Job #${job.id}`,
-    imageSrc: resolveMediaUrl(job.start_image_url, { allowRelative: true }) ?? '/images/ns-img-417.jpg',
+    imageSrc: resolveMediaUrl(job.start_image_url) ?? '/images/ns-img-417.jpg',
     videoUrl: resolveOutputUrl(job),
     status: normalizeVideoStatus(job.status),
     format: '9:16',
