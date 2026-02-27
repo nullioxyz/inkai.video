@@ -10,7 +10,7 @@ interface VideoDetailsInfoProps {
 }
 
 const VideoDetailsInfo = ({ video, formatLabel, createdAt, t }: VideoDetailsInfoProps) => {
-  const presetLabel = video.prompt?.trim() ? video.prompt : '-';
+  const presetLabel = video.presetName?.trim() ? video.presetName : '-';
 
   return (
     <>

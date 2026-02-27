@@ -15,6 +15,7 @@ describe('video mapper', () => {
     const mapped = mapJobToVideoItem({
       id: 1,
       preset_id: 1,
+      preset: { id: 1, name: 'Anime Preset' },
       user_id: 1,
       status: 'done',
       title: 'Titulo customizado',
@@ -56,6 +57,7 @@ describe('video mapper', () => {
 
     expect(mapped.imageSrc).toBe('https://inkai.video/image/token-image/image');
     expect(mapped.videoUrl).toBe('https://inkai.video/video/token-file/file.mp4');
+    expect(mapped.presetName).toBe('Anime Preset');
     expect(mapped.status).toBe('completed');
     expect(mapped.title).toBe('Titulo customizado');
   });
@@ -64,6 +66,7 @@ describe('video mapper', () => {
     const mapped = mapJobToVideoItem({
       id: 2,
       preset_id: 1,
+      preset: null,
       user_id: 1,
       status: 'done',
       title: 'Legacy URL',
@@ -106,6 +109,7 @@ describe('video mapper', () => {
 
     expect(mapped.imageSrc).toBe('/storage/start.png');
     expect(mapped.videoUrl).toBe('/storage/playback.mp4');
+    expect(mapped.presetName).toBeNull();
   });
 
   it('falls back to output path when playback/file urls are missing', () => {

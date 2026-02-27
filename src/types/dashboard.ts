@@ -28,6 +28,7 @@ export interface VideoJobItem {
   title: string;
   imageSrc: string;
   videoUrl: string;
+  presetName?: string | null;
   status: VideoJobStatus;
   format: string;
   prompt: string;

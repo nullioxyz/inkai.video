@@ -58,6 +58,7 @@ export const createDashboardVideo = async ({
     const mapped = mapJobToVideoItem(createdJob);
     mapped.title = payload.title || mapped.title;
     mapped.imageSrc = payload.imageSrc || mapped.imageSrc;
+    mapped.presetName = mapped.presetName || payload.preset.name;
     return mapped;
   } catch (error) {
     throw new Error(resolveApiErrorMessage(error, 'Falha ao gerar vídeo.'));
@@ -70,6 +71,7 @@ export const makeFallbackCreatedVideo = (payload: CreateVideoPayload): VideoJobI
     title: payload.title || payload.preset.name,
     imageSrc: payload.imageSrc,
     videoUrl: '',
+    presetName: payload.preset.name,
     status: 'processing',
     format: payload.preset.aspectRatio ?? '9:16',
     prompt: payload.preset.description,

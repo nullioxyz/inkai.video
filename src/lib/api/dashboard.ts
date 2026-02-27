@@ -111,6 +111,10 @@ export interface PredictionResponse {
 export interface BackendJobResponse {
   id: number;
   preset_id: number;
+  preset?: {
+    id: number;
+    name: string;
+  } | null;
   user_id: number;
   status: 'created' | 'processing' | 'done' | 'failed' | 'cancelled';
   title?: string | null;

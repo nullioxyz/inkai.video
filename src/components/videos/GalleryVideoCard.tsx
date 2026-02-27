@@ -113,6 +113,11 @@ const GalleryVideoCard = ({ video }: GalleryVideoCardProps) => {
         </div>
 
         <Link href={`/dashboard/video/${video.id}`} className="block space-y-2">
+          {video.presetName ? (
+            <VideoCard.Meta>
+              {t('dashboard.videoPreset')}: {video.presetName}
+            </VideoCard.Meta>
+          ) : null}
           <VideoCard.Meta>
             {t('gallery.createdAt')} {createdLabel}
           </VideoCard.Meta>

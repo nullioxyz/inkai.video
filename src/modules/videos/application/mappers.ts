@@ -41,6 +41,7 @@ export const mapJobToVideoItem = (job: BackendJobResponse): VideoJobItem => {
     title: job.title || job.original_filename || `Job #${job.id}`,
     imageSrc: resolveMediaUrl(job.start_image_url) ?? '/images/ns-img-417.jpg',
     videoUrl: resolveOutputUrl(job),
+    presetName: job.preset?.name ?? null,
     status: normalizeVideoStatus(job.status),
     format: '9:16',
     prompt: '',
