@@ -1,6 +1,6 @@
 import { SeoContent } from '@/lib/api/public-content';
 import type { Metadata } from 'next';
-import { defaultMetadata } from '@/utils/generateMetaData';
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, defaultMetadata } from '@/utils/generateMetaData';
 
 interface BuildSeoMetadataOptions {
   fallbackTitle?: string;
@@ -19,16 +19,24 @@ const splitKeywords = (keywords: string | null): string[] | undefined => {
 };
 
 export const buildSeoMetadata = (seo: SeoContent | null, options: BuildSeoMetadataOptions = {}): Metadata => {
+  const fallbackTitle = options.fallbackTitle ?? (typeof defaultMetadata.title === 'string' ? defaultMetadata.title : DEFAULT_TITLE);
+  const fallbackDescription =
+    options.fallbackDescription ?? (typeof defaultMetadata.description === 'string' ? defaultMetadata.description : DEFAULT_DESCRIPTION);
+
   if (!seo) {
     return {
       ...defaultMetadata,
-      title: options.fallbackTitle ?? defaultMetadata.title,
-      description: options.fallbackDescription ?? defaultMetadata.description,
+      title: fallbackTitle,
+      description: fallbackDescription,
     };
   }
 
-  const title = seo.meta_title || options.fallbackTitle || defaultMetadata.title;
-  const description = seo.meta_description || options.fallbackDescription || defaultMetadata.description;
+  const title = seo.meta_title || fallbackTitle;
+  const description = seo.meta_description || fallbackDescription;
+  const openGraphTitle = seo.og_title || title;
+  const openGraphDescription = seo.og_description || description;
+  const twitterTitle = seo.twitter_title || title;
+  const twitterDescription = seo.twitter_description || description;
 
   return {
     ...defaultMetadata,
@@ -40,14 +48,14 @@ export const buildSeoMetadata = (seo: SeoContent | null, options: BuildSeoMetada
     },
     openGraph: {
       ...defaultMetadata.openGraph,
-      title: seo.og_title || title,
-      description: seo.og_description || description,
+      title: openGraphTitle,
+      description: openGraphDescription,
       url: seo.canonical_url || defaultMetadata.openGraph?.url,
     },
     twitter: {
       ...defaultMetadata.twitter,
-      title: seo.twitter_title || title,
-      description: seo.twitter_description || description,
+      title: twitterTitle,
+      description: twitterDescription,
     },
   };
 };
