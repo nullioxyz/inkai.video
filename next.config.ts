@@ -8,6 +8,21 @@ const nextConfig: NextConfig = {
       '@public': './public',
     },
   },
+  async rewrites() {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_IAVIDEO_API_URL?.trim() || process.env.IAVIDEO_API_URL?.trim();
+    if (!apiBaseUrl) {
+      return [];
+    }
+
+    const normalizedBase = apiBaseUrl.replace(/\/+$/, '');
+
+    return [
+      {
+        source: '/storage/:path*',
+        destination: `${normalizedBase}/storage/:path*`,
+      },
+    ];
+  },
   images: {
     unoptimized: true,
     qualities: [25, 50, 75, 100],

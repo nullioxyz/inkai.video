@@ -1,4 +1,5 @@
 import { ApiLocale } from '@/lib/locale/resolve-api-locale';
+import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 import { apiRequest } from './client';
 
 interface ApiCollectionResponse<T> {
@@ -69,6 +70,16 @@ const withLanguageHeader = (locale: ApiLocale): HeadersInit => ({
   'Accept-Language': locale,
 });
 
+const normalizeMediaCollection = <T extends { images: Array<{ id: number; url: string; name: string }> }>(payload: T): T => {
+  return {
+    ...payload,
+    images: payload.images.map((image) => ({
+      ...image,
+      url: resolveMediaUrl(image.url, { allowRelative: true }) ?? '',
+    })),
+  };
+};
+
 export const institutionalApi = {
   async list(locale: ApiLocale, token?: string | null): Promise<InstitutionalContent[]> {
     const response = await apiRequest<ApiCollectionResponse<InstitutionalContent>>('/api/institutional', {
@@ -76,7 +87,7 @@ export const institutionalApi = {
       headers: withLanguageHeader(locale),
     });
 
-    return response.data;
+    return response.data.map((entry) => normalizeMediaCollection(entry));
   },
 
   async show(slug: string, locale: ApiLocale, token?: string | null): Promise<InstitutionalContent> {
@@ -85,7 +96,7 @@ export const institutionalApi = {
       headers: withLanguageHeader(locale),
     });
 
-    return response.data;
+    return normalizeMediaCollection(response.data);
   },
 };
 
@@ -96,7 +107,7 @@ export const seoApi = {
       headers: withLanguageHeader(locale),
     });
 
-    return response.data;
+    return normalizeMediaCollection(response.data);
   },
 };
 

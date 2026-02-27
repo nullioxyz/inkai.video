@@ -3,9 +3,10 @@ interface PlaybackVideoElementProps {
   onWaiting: () => void;
   onCanPlay: () => void;
   onLoadedMetadata: (ratio: number | null) => void;
+  onError: () => void;
 }
 
-const PlaybackVideoElement = ({ src, onWaiting, onCanPlay, onLoadedMetadata }: PlaybackVideoElementProps) => {
+const PlaybackVideoElement = ({ src, onWaiting, onCanPlay, onLoadedMetadata, onError }: PlaybackVideoElementProps) => {
   return (
     <video
       src={src}
@@ -21,6 +22,7 @@ const PlaybackVideoElement = ({ src, onWaiting, onCanPlay, onLoadedMetadata }: P
         }
         onLoadedMetadata(element.videoWidth / element.videoHeight);
       }}
+      onError={onError}
       className="h-full w-full bg-black object-contain"
     />
   );

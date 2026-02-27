@@ -20,16 +20,16 @@ interface VideoDetailsPanelProps {
 }
 
 const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actionsVisible }: VideoDetailsPanelProps) => {
-  const { token, cancelVideo } = useDashboard();
+  const { cancelVideo } = useDashboard();
   const { t, intlLocale } = useLocale();
   const [detectedRatio, setDetectedRatio] = useState<number | null>(null);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [playbackError, setPlaybackError] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'success' | 'error'>('success');
-  const { downloading, canDownloadFromBackend, download } = useVideoDownload({
-    inputId: video.inputId,
-    token,
+  const { downloading, canDownload, download } = useVideoDownload({
+    mediaUrl: video.videoUrl,
     title: video.title,
   });
   const createdAt = video.createdAt ? new Date(video.createdAt).toLocaleString(intlLocale) : '-';
@@ -53,6 +53,7 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
   useEffect(() => {
     setDetectedRatio(null);
     setVideoLoading(true);
+    setPlaybackError(false);
   }, [video.videoUrl]);
 
   useEffect(() => {
@@ -76,10 +77,21 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
               <div className="relative h-[300px] w-full md:h-[380px] lg:h-[440px] xl:h-[500px]">
                 <VideoPlaybackSurface
                   video={video}
-                  loading={videoLoading}
-                  onWaiting={() => setVideoLoading(true)}
-                  onCanPlay={() => setVideoLoading(false)}
+                  loading={videoLoading && !playbackError}
+                  playbackError={playbackError}
+                  onWaiting={() => {
+                    setVideoLoading(true);
+                    setPlaybackError(false);
+                  }}
+                  onCanPlay={() => {
+                    setVideoLoading(false);
+                    setPlaybackError(false);
+                  }}
                   onLoadedMetadata={setDetectedRatio}
+                  onPlaybackError={() => {
+                    setVideoLoading(false);
+                    setPlaybackError(true);
+                  }}
                   generatingLabel={t('dashboard.generating')}
                 />
               </div>
@@ -95,7 +107,7 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
                   <VideoDetailsActions
                     showPrimaryActions={showPrimaryActions}
                     showCancelAction={isCancelable}
-                    canDownload={!isProcessing && hasVideoOutput && canDownloadFromBackend}
+                    canDownload={!isProcessing && hasVideoOutput && canDownload}
                     downloading={downloading}
                     canceling={canceling}
                     onDownload={() => {

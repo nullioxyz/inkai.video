@@ -4,7 +4,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { resolveCardRatio } from '@/modules/videos/application/card-layout';
 import type { PresetItem } from '@/types/dashboard';
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { onPresetPreviewVideoCanPlay, onPresetPreviewVideoError, resolveHasPreviewVideo } from './preset-preview-state';
 import PresetPreviewFallbackOverlay from './PresetPreviewFallbackOverlay';
 import PresetPreviewVideo from './PresetPreviewVideo';
 import PresetSelectedOverlay from './PresetSelectedOverlay';
@@ -21,9 +22,14 @@ const PresetItemMedia = ({ preset, alt, selected }: PresetItemMediaProps) => {
   const [isHovering, setIsHovering] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [previewVideoFailed, setPreviewVideoFailed] = useState(false);
 
-  const hasPreviewVideo = Boolean(preset.previewVideoUrl);
+  const hasPreviewVideo = resolveHasPreviewVideo(preset.previewVideoUrl, previewVideoFailed);
   const cardRatio = resolveCardRatio(preset.aspectRatio);
+
+  useEffect(() => {
+    setPreviewVideoFailed(false);
+  }, [preset.previewVideoUrl]);
 
   const handleMouseEnter = () => {
     setIsHovering(true);
@@ -68,7 +74,19 @@ const PresetItemMedia = ({ preset, alt, selected }: PresetItemMediaProps) => {
         }}
       />
       {hasPreviewVideo ? (
-        <PresetPreviewVideo previewVideoRef={previewVideoRef} src={preset.previewVideoUrl ?? ''} isHovering={isHovering} />
+        <PresetPreviewVideo
+          previewVideoRef={previewVideoRef}
+          src={preset.previewVideoUrl ?? ''}
+          isHovering={isHovering}
+          onCanPlay={() => {
+            setPreviewVideoFailed((failed) => onPresetPreviewVideoCanPlay({ isHovering, previewVideoFailed: failed }).previewVideoFailed);
+          }}
+          onError={() => {
+            const nextState = onPresetPreviewVideoError({ isHovering, previewVideoFailed });
+            setPreviewVideoFailed(nextState.previewVideoFailed);
+            setIsHovering(nextState.isHovering);
+          }}
+        />
       ) : (
         <PresetPreviewFallbackOverlay label={t('preset.preview')} />
       )}

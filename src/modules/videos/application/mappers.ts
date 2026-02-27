@@ -1,5 +1,6 @@
 import { BackendJobResponse } from '@/lib/api/dashboard';
 import { VideoJobItem } from '@/types/dashboard';
+import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 
 export const normalizeVideoStatus = (status: string): VideoJobItem['status'] => {
   const normalized = status.trim().toLowerCase();
@@ -25,7 +26,12 @@ const resolveOutputUrl = (job: BackendJobResponse) => {
   const outputs = job.prediction?.outputs ?? [];
   const videoOutput = outputs.find((output) => output.kind === 'video');
 
-  return videoOutput?.playback_url ?? videoOutput?.file_url ?? videoOutput?.path ?? '';
+  return (
+    resolveMediaUrl(videoOutput?.playback_url, { allowRelative: true }) ??
+    resolveMediaUrl(videoOutput?.file_url, { allowRelative: true }) ??
+    resolveMediaUrl(videoOutput?.path, { allowRelative: true }) ??
+    ''
+  );
 };
 
 export const mapJobToVideoItem = (job: BackendJobResponse): VideoJobItem => {
@@ -33,7 +39,7 @@ export const mapJobToVideoItem = (job: BackendJobResponse): VideoJobItem => {
     id: String(job.id),
     inputId: job.id,
     title: job.title || job.original_filename || `Job #${job.id}`,
-    imageSrc: job.start_image_url || '/images/ns-img-417.jpg',
+    imageSrc: resolveMediaUrl(job.start_image_url, { allowRelative: true }) ?? '/images/ns-img-417.jpg',
     videoUrl: resolveOutputUrl(job),
     status: normalizeVideoStatus(job.status),
     format: '9:16',

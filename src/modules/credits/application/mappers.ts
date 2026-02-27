@@ -1,4 +1,5 @@
 import { CreditStatementEntryResponse, CreditVideoGenerationResponse } from '@/lib/api/dashboard';
+import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 import { CreditStatementEntryViewModel, CreditVideoGenerationViewModel } from '../domain/view-models';
 
 export const mapCreditStatementToViewModel = (entry: CreditStatementEntryResponse): CreditStatementEntryViewModel => {
@@ -24,7 +25,7 @@ export const mapCreditVideoGenerationToViewModel = (entry: CreditVideoGeneration
     predictionStatus: entry.prediction?.status ?? null,
     predictionErrorCode: entry.prediction?.error_code ?? null,
     predictionErrorMessage: entry.prediction?.error_message ?? null,
-    outputVideoUrl: entry.prediction?.output_video_url ?? null,
+    outputVideoUrl: resolveMediaUrl(entry.prediction?.output_video_url, { allowRelative: true }),
     creditsDebited: entry.credits_debited,
     creditsRefunded: entry.credits_refunded,
     creditsUsed: entry.credits_used,

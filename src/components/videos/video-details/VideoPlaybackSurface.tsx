@@ -8,13 +8,24 @@ import PlaybackVideoElement from './PlaybackVideoElement';
 interface VideoPlaybackSurfaceProps {
   video: VideoJobItem;
   loading: boolean;
+  playbackError: boolean;
   onWaiting: () => void;
   onCanPlay: () => void;
   onLoadedMetadata: (ratio: number | null) => void;
+  onPlaybackError: () => void;
   generatingLabel: string;
 }
 
-const VideoPlaybackSurface = ({ video, loading, onWaiting, onCanPlay, onLoadedMetadata, generatingLabel }: VideoPlaybackSurfaceProps) => {
+const VideoPlaybackSurface = ({
+  video,
+  loading,
+  playbackError,
+  onWaiting,
+  onCanPlay,
+  onLoadedMetadata,
+  onPlaybackError,
+  generatingLabel,
+}: VideoPlaybackSurfaceProps) => {
   const isProcessing = video.status === 'processing';
   const hasVideoOutput = Boolean(video.videoUrl);
 
@@ -45,6 +56,20 @@ const VideoPlaybackSurface = ({ video, loading, onWaiting, onCanPlay, onLoadedMe
     );
   }
 
+  if (playbackError) {
+    return (
+      <>
+        <PlaybackSourceImage src={video.imageSrc} title={video.title} />
+        <PlaybackStatusOverlay
+          message="Video is unavailable right now."
+          spinnerTone="light"
+          showSpinner={false}
+          className="bg-background-7/30 dark:bg-background-8/30 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]"
+        />
+      </>
+    );
+  }
+
   return (
     <>
       {loading && (
@@ -60,6 +85,7 @@ const VideoPlaybackSurface = ({ video, loading, onWaiting, onCanPlay, onLoadedMe
         onWaiting={onWaiting}
         onCanPlay={onCanPlay}
         onLoadedMetadata={onLoadedMetadata}
+        onError={onPlaybackError}
       />
     </>
   );
