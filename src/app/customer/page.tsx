@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title: 'Customers - AI Application || NextSaaS',
+  title: 'Customers | Inkai',
 };
 
 const page = () => {

@@ -1,8 +1,10 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
+import { usePageTabTitle } from '@/components/dashboard/hooks/usePageTabTitle';
 import CreditsPageContent from '@/components/credits/CreditsPageContent';
 import { useDashboard } from '@/context/dashboard-context';
+import { useLocale } from '@/context/LocaleContext';
 import { resolveApiErrorMessage } from '@/lib/api/client';
 import { getCreditsVideoGenerations } from '@/lib/api/dashboard';
 import { mapCreditVideoGenerationToViewModel } from '@/modules/credits/application/mappers';
@@ -10,7 +12,9 @@ import { CreditVideoGenerationViewModel } from '@/modules/credits/domain/view-mo
 import { useEffect, useState } from 'react';
 
 const CreditsPage = () => {
+  const { t } = useLocale();
   const { videos, creditBalance, token } = useDashboard();
+  usePageTabTitle(t('credits.title'));
   const [videoGenerations, setVideoGenerations] = useState<CreditVideoGenerationViewModel[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage] = useState(15);

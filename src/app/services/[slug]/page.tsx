@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title: 'Services Details - AI Application || NextSaaS',
+  title: 'Services Details | Inkai',
 };
 
 const OurServicesDetails = async ({ params }: { params: Promise<{ slug: string }> }) => {

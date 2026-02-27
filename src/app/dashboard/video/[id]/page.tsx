@@ -1,17 +1,21 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
+import { usePageTabTitle } from '@/components/dashboard/hooks/usePageTabTitle';
 import VideoDetailPageContent from '@/components/video-details/VideoDetailPageContent';
 import VideoNotFoundPanel from '@/components/video-details/VideoNotFoundPanel';
 import { useDashboard } from '@/context/dashboard-context';
+import { useLocale } from '@/context/LocaleContext';
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
 
 const DashboardVideoDetailsPage = () => {
+  const { t } = useLocale();
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { videos, loadingJobs } = useDashboard();
   const video = useMemo(() => videos.find((item) => item.id === id) ?? null, [id, videos]);
+  usePageTabTitle(video?.title ? `${t('dashboard.videoDetails')} - ${video.title}` : t('dashboard.videoDetails'));
 
   return (
     <DashboardContentShell videos={videos} selectedVideoId={id}>

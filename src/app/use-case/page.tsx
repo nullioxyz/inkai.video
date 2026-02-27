@@ -6,7 +6,7 @@ import FinanceAndOperation from '../../components/use-case/FinanceAndOperation';
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title: 'Use Case - AI Application || NextSaaS',
+  title: 'Use Case | Inkai',
 };
 
 const page = () => {

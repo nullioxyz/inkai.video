@@ -34,9 +34,8 @@ const VideoDetailsActions = ({ showActions, canDownload, downloading, onDownload
         <button
           type="button"
           disabled
-          className="border-stroke-7 bg-background-7/70 text-secondary/35 dark:text-accent/35 inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl border px-3">
+          className="text-secondary/30 dark:text-accent/30 inline-flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-xl">
           <DownloadIcon />
-          {t('dashboard.downloadVideo')}
         </button>
       ) : (
         <button
@@ -45,20 +44,19 @@ const VideoDetailsActions = ({ showActions, canDownload, downloading, onDownload
           disabled={downloading}
           aria-label={t('dashboard.downloadVideo')}
           title={t('dashboard.downloadVideo')}
-          className="border-stroke-7 bg-background-7 text-secondary hover:bg-background-5 focus-visible:ring-secondary/35 dark:bg-background-8 dark:text-accent dark:hover:bg-background-7 dark:focus-visible:ring-accent/35 inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-3 shadow-sm transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50">
+          className="text-secondary hover:bg-background-4 dark:text-accent dark:hover:bg-background-7 focus-visible:ring-secondary/35 dark:focus-visible:ring-accent/35 inline-flex h-11 w-11 items-center justify-center rounded-xl transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50">
           <DownloadIcon />
-          {t('dashboard.downloadVideo')}
         </button>
       )}
 
       <button
         type="button"
         onClick={onCreateNewVideo}
-        className="from-secondary to-secondary/90 text-background-8 focus-visible:ring-secondary/40 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r px-4 text-tagline-2 font-semibold shadow-[0_8px_20px_rgba(15,23,42,0.22)] transition hover:brightness-105 focus-visible:ring-2 focus-visible:outline-none dark:from-accent dark:to-accent/90 dark:text-background-8 dark:focus-visible:ring-accent/40">
+        className="text-tagline-2 text-secondary/70 dark:text-accent/70 hover:bg-background-4 dark:hover:bg-background-7 hover:text-secondary dark:hover:text-accent focus-visible:ring-secondary/35 dark:focus-visible:ring-accent/35 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 font-semibold transition focus-visible:ring-2 focus-visible:outline-none">
         <span className="shrink-0">
           <CreateIcon />
         </span>
-        {t('dashboard.createNewVideo')}
+        {t('dashboard.newVideo')}
       </button>
     </div>
   );
