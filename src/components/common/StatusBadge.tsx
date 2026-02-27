@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from '@/context/LocaleContext';
-import { VideoJobStatus } from '@/types/dashboard';
+import type { VideoJobStatus } from '@/types/dashboard';
 
 const STATUS_CLASS: Record<VideoJobStatus, string> = {
   processing: 'bg-ns-yellow-light text-secondary',

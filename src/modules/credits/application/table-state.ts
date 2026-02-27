@@ -1,4 +1,4 @@
-import { CreditVideoGenerationViewModel } from '@/context/dashboard-context';
+import { CreditVideoGenerationViewModel } from '../domain/view-models';
 
 export const normalizeCreditStatus = (status: string): string => {
   if (status === 'done' || status === 'succeeded') {

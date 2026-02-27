@@ -1,8 +1,8 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
-import VideoDetailPageContent from '@/components/dashboard/pages/VideoDetailPageContent';
-import VideoNotFoundPanel from '@/components/dashboard/pages/VideoNotFoundPanel';
+import VideoDetailPageContent from '@/components/video-details/VideoDetailPageContent';
+import VideoNotFoundPanel from '@/components/video-details/VideoNotFoundPanel';
 import { useDashboard } from '@/context/dashboard-context';
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';

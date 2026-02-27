@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
-import GalleryPageContent from '@/components/dashboard/pages/GalleryPageContent';
+import GalleryPageContent from '@/components/gallery/GalleryPageContent';
 import { useDashboard } from '@/context/dashboard-context';
 
 const GalleryPage = () => {

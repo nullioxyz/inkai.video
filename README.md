@@ -70,6 +70,10 @@ src/
   context/                  # global UI state (dashboard)
   lib/                      # HTTP client, session, shared utilities
   modules/
+    dashboard/
+      application/
+      domain/
+      infra/
     auth/
       application/
       domain/
@@ -138,6 +142,7 @@ Realtime updates are implemented with a dedicated gateway in:
 - Statement
 - Paginated generation listing
 - Audit event/sub-row rendering
+- Dedicated credit view-model mappers in `src/modules/credits/application/mappers.ts`
 
 ## Security
 
@@ -235,4 +240,4 @@ Examples available in:
 
 - Migrate session handling to server-set `HttpOnly` cookies (stronger XSS posture).
 - Increase UI interaction coverage with React Testing Library for complex components.
-- Split `DashboardContext` into smaller domain contexts (`Auth`, `Videos`, `Credits`, `Presets`) if state growth continues.
+- Continue extracting `DashboardProvider` orchestration into smaller hooks if state growth continues.

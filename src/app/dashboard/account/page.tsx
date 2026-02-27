@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
-import AccountPageContent from '@/components/dashboard/pages/AccountPageContent';
+import AccountPageContent from '@/components/auth/AccountPageContent';
 import { useDashboard } from '@/context/dashboard-context';
 
 const AccountPage = () => {

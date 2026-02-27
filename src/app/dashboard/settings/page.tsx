@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
-import SettingsPageContent from '@/components/dashboard/pages/SettingsPageContent';
+import SettingsPageContent from '@/components/settings/SettingsPageContent';
 import { useDashboard } from '@/context/dashboard-context';
 
 const SettingsPage = () => {

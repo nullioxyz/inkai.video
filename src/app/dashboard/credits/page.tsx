@@ -1,49 +1,13 @@
 'use client';
 
 import DashboardContentShell from '@/components/dashboard/layout/DashboardContentShell';
-import CreditsPageContent from '@/components/dashboard/pages/CreditsPageContent';
-import { CreditVideoGenerationViewModel, useDashboard } from '@/context/dashboard-context';
+import CreditsPageContent from '@/components/credits/CreditsPageContent';
+import { useDashboard } from '@/context/dashboard-context';
 import { resolveApiErrorMessage } from '@/lib/api/client';
-import { CreditVideoGenerationResponse, getCreditsVideoGenerations } from '@/lib/api/dashboard';
+import { getCreditsVideoGenerations } from '@/lib/api/dashboard';
+import { mapCreditVideoGenerationToViewModel } from '@/modules/credits/application/mappers';
+import { CreditVideoGenerationViewModel } from '@/modules/credits/domain/view-models';
 import { useEffect, useState } from 'react';
-
-const mapCreditVideoGenerationToViewModel = (entry: CreditVideoGenerationResponse): CreditVideoGenerationViewModel => {
-  return {
-    inputId: entry.input_id,
-    title: entry.title,
-    status: entry.status,
-    presetId: entry.preset?.id ?? null,
-    presetName: entry.preset?.name ?? null,
-    predictionId: entry.prediction?.id ?? null,
-    predictionStatus: entry.prediction?.status ?? null,
-    predictionErrorCode: entry.prediction?.error_code ?? null,
-    predictionErrorMessage: entry.prediction?.error_message ?? null,
-    outputVideoUrl: entry.prediction?.output_video_url ?? null,
-    creditsDebited: entry.credits_debited,
-    creditsRefunded: entry.credits_refunded,
-    creditsUsed: entry.credits_used,
-    isFailed: Boolean(entry.is_failed),
-    isCanceled: Boolean(entry.is_canceled),
-    isRefunded: Boolean(entry.is_refunded),
-    failureCode: entry.failure?.code ?? null,
-    failureMessage: entry.failure?.message ?? null,
-    failureReason: entry.failure?.reason ?? null,
-    cancellationReason: entry.cancellation?.reason ?? null,
-    creditEvents: (entry.credit_events ?? []).map((event) => ({
-      ledgerId: event?.ledger_id ?? null,
-      type: event?.type ?? '',
-      operation: event?.operation ?? '',
-      delta: Number(event?.delta ?? 0),
-      balanceAfter: event?.balance_after ?? null,
-      reason: event?.reason ?? '',
-      referenceType: event?.reference_type ?? '',
-      referenceId: event?.reference_id ?? null,
-      createdAt: event?.created_at ?? null,
-    })),
-    createdAt: entry.created_at,
-    updatedAt: entry.updated_at,
-  };
-};
 
 const CreditsPage = () => {
   const { videos, creditBalance, token } = useDashboard();

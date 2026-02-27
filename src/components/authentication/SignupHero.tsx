@@ -1,74 +1,69 @@
+'use client';
+
+import { useLocale } from '@/context/LocaleContext';
+import { useState } from 'react';
 import RevealAnimation from '../animation/RevealAnimation';
 import SocialAuth from './SocialAuth';
+import AuthField from './components/AuthField';
+import AuthSubmitButton from './components/AuthSubmitButton';
+import SignupBackgroundCard from './components/SignupBackgroundCard';
+import SignupDivider from './components/SignupDivider';
+import SignupInnerCard from './components/SignupInnerCard';
 
 const SignupHero = () => {
+  const { t } = useLocale();
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   return (
     <section className="pt-[120px] pb-[70px] lg:pt-[180px] lg:pb-[100px]">
       <div className="main-container">
         <RevealAnimation delay={0.1}>
-          <div className="mx-auto w-full max-w-[866px] overflow-hidden rounded-[20px] bg-cover bg-center bg-no-repeat sm:bg-[url('/images/ns-img-375.jpg')] sm:p-[70px] md:rounded-4xl">
+          <SignupBackgroundCard>
             <RevealAnimation delay={0.1}>
-              <div className="bg-background-1 dark:bg-background-6 max-w-[400px] rounded-[20px] px-8 py-14">
+              <SignupInnerCard>
                 <form>
-                  <fieldset className="mb-4 space-y-2">
-                    <label
-                      htmlFor="username"
-                      className="text-tagline-2 text-secondary dark:text-accent block font-medium select-none">
-                      Username
-                    </label>
-                    <input type="text" id="username" className="auth-form-input" placeholder="Your unique identifier" />
-                  </fieldset>
-                  <fieldset className="mb-4 space-y-2">
-                    <label
-                      htmlFor="email"
-                      className="text-tagline-2 text-secondary dark:text-accent block font-medium select-none">
-                      Your email
-                    </label>
-                    <input type="email" id="email" className="auth-form-input" placeholder="Email address" />
-                  </fieldset>
-                  <fieldset className="mb-4 space-y-2">
-                    <label
-                      htmlFor="password"
-                      className="text-tagline-2 text-secondary dark:text-accent block font-medium select-none">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      className="auth-form-input"
-                      placeholder="At least 8 characters"
-                    />
-                  </fieldset>
-                  <fieldset className="mb-3 space-y-2">
-                    <label
-                      htmlFor="confirm-password"
-                      className="text-tagline-2 text-secondary dark:text-accent block font-medium select-none">
-                      Confirm Password
-                    </label>
-                    <input
-                      type="password"
-                      id="confirm-password"
-                      className="auth-form-input"
-                      placeholder="Re-enter your password"
-                    />
-                  </fieldset>
-                  <div className="mt-8">
-                    <button
-                      type="submit"
-                      className="btn btn-md hover:btn-secondary dark:hover:btn-accent btn-primary w-full first-letter:uppercase before:content-none">
-                      Sign up
-                    </button>
-                  </div>
+                  <AuthField
+                    id="username"
+                    type="text"
+                    label={t('auth.signup.usernameLabel')}
+                    placeholder={t('auth.signup.usernamePlaceholder')}
+                    value={username}
+                    onChange={setUsername}
+                  />
+                  <AuthField
+                    id="email"
+                    type="email"
+                    label={t('auth.signup.emailLabel')}
+                    placeholder={t('auth.signup.emailPlaceholder')}
+                    value={email}
+                    onChange={setEmail}
+                  />
+                  <AuthField
+                    id="password"
+                    type="password"
+                    label={t('auth.signup.passwordLabel')}
+                    placeholder={t('auth.signup.passwordPlaceholder')}
+                    value={password}
+                    onChange={setPassword}
+                  />
+                  <AuthField
+                    id="confirm-password"
+                    type="password"
+                    label={t('auth.signup.confirmPasswordLabel')}
+                    placeholder={t('auth.signup.confirmPasswordPlaceholder')}
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                  />
+                  <AuthSubmitButton label={t('auth.signup.submit')} disabled={false} />
                 </form>
-                <div className="py-8 text-center">
-                  <p className="text-tagline-2 text-secondary dark:text-accent font-normal">Or</p>
-                </div>
-                <div>
-                  <SocialAuth />
-                </div>
-              </div>
+                <SignupDivider label={t('auth.common.or')} />
+                <SocialAuth />
+              </SignupInnerCard>
             </RevealAnimation>
-          </div>
+          </SignupBackgroundCard>
         </RevealAnimation>
       </div>
     </section>
