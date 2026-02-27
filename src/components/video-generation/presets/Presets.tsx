@@ -1,4 +1,3 @@
-import MosaicGrid from '@/components/common/mosaic/MosaicGrid';
 import type { PresetItem as PresetItemType } from '@/types/dashboard';
 import PresetItem from './PresetItem';
 
@@ -10,15 +9,13 @@ interface PresetsProps {
 
 const Presets = ({ presets, selectedPresetId, onSelectPreset }: PresetsProps) => {
   return (
-    <MosaicGrid
-      items={presets}
-      getKey={(preset) => preset.id}
-      renderItem={(preset) => (
-        <PresetItem preset={preset} selected={selectedPresetId === preset.id} onSelect={onSelectPreset} />
-      )}
-      className="mx-auto w-full max-w-[980px] columns-3 gap-1.5 sm:columns-4 xl:columns-6"
-      itemClassName="mb-1.5 break-inside-avoid"
-    />
+    <div className="flex w-max gap-2.5">
+      {presets.map((preset) => (
+        <div key={preset.id} className="w-[154px] shrink-0 snap-start sm:w-[164px] md:w-[174px]">
+          <PresetItem preset={preset} selected={selectedPresetId === preset.id} onSelect={onSelectPreset} />
+        </div>
+      ))}
+    </div>
   );
 };
 

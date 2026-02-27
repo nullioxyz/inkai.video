@@ -5,6 +5,8 @@ describe('video mapper', () => {
   it('normalizes backend status', () => {
     expect(normalizeVideoStatus('done')).toBe('completed');
     expect(normalizeVideoStatus('cancelled')).toBe('canceled');
+    expect(normalizeVideoStatus('cancelled_after_retries')).toBe('canceled');
+    expect(normalizeVideoStatus('canceled_after_retries')).toBe('canceled');
     expect(normalizeVideoStatus('failed')).toBe('failed');
     expect(normalizeVideoStatus('processing')).toBe('processing');
   });

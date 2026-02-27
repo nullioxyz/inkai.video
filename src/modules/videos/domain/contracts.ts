@@ -1,5 +1,13 @@
 import { BackendJobResponse } from '@/lib/api/dashboard';
 
+export interface DailyGenerationQuota {
+  daily_limit: number;
+  used_today: number;
+  remaining_today: number;
+  near_limit: boolean;
+  limit_reached: boolean;
+}
+
 export interface VideosGateway {
   listJobs(token: string, page?: number, perPage?: number): Promise<BackendJobResponse[]>;
   createJob(token: string, presetId: number, image: File, title?: string): Promise<BackendJobResponse | null>;
@@ -17,6 +25,7 @@ export interface VideosRealtimeGateway {
     token: string;
     userId: number;
     onJobUpdated: (job: BackendJobResponse) => void;
+    onGenerationLimitAlert?: (quota: DailyGenerationQuota) => void;
     onError?: (error: unknown) => void;
   }): Promise<RealtimeUnsubscribe>;
 }

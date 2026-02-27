@@ -1,4 +1,5 @@
 import VideoGenerationDashboard from '@/components/video-generation/VideoGenerationDashboard';
+import { DailyGenerationQuota } from '@/modules/videos/domain/contracts';
 import type { PresetItem, VideoJobItem } from '@/types/dashboard';
 
 interface WorkspaceCreateViewProps {
@@ -6,6 +7,8 @@ interface WorkspaceCreateViewProps {
   presetCategories: string[];
   loadingPresets: boolean;
   presetsError: string | null;
+  quota: DailyGenerationQuota | null;
+  quotaError: string | null;
   animateInTrigger: number;
   onGenerateVideo: (payload: {
     title: string;
@@ -17,7 +20,16 @@ interface WorkspaceCreateViewProps {
   }) => Promise<VideoJobItem>;
 }
 
-const WorkspaceCreateView = ({ presets, presetCategories, loadingPresets, presetsError, animateInTrigger, onGenerateVideo }: WorkspaceCreateViewProps) => {
+const WorkspaceCreateView = ({
+  presets,
+  presetCategories,
+  loadingPresets,
+  presetsError,
+  quota,
+  quotaError,
+  animateInTrigger,
+  onGenerateVideo,
+}: WorkspaceCreateViewProps) => {
   return (
     <div className="min-h-0 flex-1">
       <VideoGenerationDashboard
@@ -25,6 +37,8 @@ const WorkspaceCreateView = ({ presets, presetCategories, loadingPresets, preset
         presetCategories={presetCategories}
         loadingPresets={loadingPresets}
         presetsError={presetsError}
+        quota={quota}
+        quotaError={quotaError}
         onGenerateVideo={onGenerateVideo}
         animateInTrigger={animateInTrigger}
       />

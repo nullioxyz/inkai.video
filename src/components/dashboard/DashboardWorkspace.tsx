@@ -3,6 +3,7 @@
 import { useDashboard } from '@/context/dashboard-context';
 import { useLocale } from '@/context/LocaleContext';
 import { mustRedirectToFirstLoginReset } from '@/modules/auth/application/first-login-guard';
+import { shouldPollQuotaFallback } from '@/modules/videos/application/quota-polling';
 import type { PresetItem } from '@/types/dashboard';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,8 +18,24 @@ const DashboardWorkspace = () => {
   const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const { token, isHydrated, mustResetPassword, videos, createVideo, renameVideo, presets, presetCategories, loadingPresets, presetsError, loadingJobs, jobsError } =
-    useDashboard();
+  const {
+    token,
+    isHydrated,
+    mustResetPassword,
+    videos,
+    createVideo,
+    renameVideo,
+    presets,
+    presetCategories,
+    loadingPresets,
+    presetsError,
+    loadingJobs,
+    jobsError,
+    quota,
+    quotaError,
+    realtimeConnected,
+    refreshQuota,
+  } = useDashboard();
   const { collapsed: sidebarCollapsed, toggle: handleToggleSidebar } = usePersistedSidebarCollapse();
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,6 +96,26 @@ const DashboardWorkspace = () => {
     }, 280);
   };
 
+  useEffect(() => {
+    if (
+      !shouldPollQuotaFallback({
+        token,
+        realtimeConnected,
+        selectedVideoId,
+      })
+    ) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void refreshQuota();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [refreshQuota, realtimeConnected, selectedVideoId, token]);
+
   return (
     <main className="bg-background-3 dark:bg-background-7 h-dvh overflow-hidden">
       <div className="flex h-full w-full overflow-hidden">
@@ -117,6 +154,8 @@ const DashboardWorkspace = () => {
                 presetCategories={presetCategories}
                 loadingPresets={loadingPresets}
                 presetsError={presetsError}
+                quota={quota}
+                quotaError={quotaError}
                 onGenerateVideo={handleGenerateVideo}
                 animateInTrigger={createViewAnimationKey}
               />

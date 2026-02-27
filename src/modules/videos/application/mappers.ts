@@ -2,13 +2,20 @@ import { BackendJobResponse } from '@/lib/api/dashboard';
 import { VideoJobItem } from '@/types/dashboard';
 
 export const normalizeVideoStatus = (status: string): VideoJobItem['status'] => {
-  if (status === 'done' || status === 'succeeded') {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === 'done' || normalized === 'succeeded') {
     return 'completed';
   }
-  if (status === 'failed') {
+  if (normalized === 'failed') {
     return 'failed';
   }
-  if (status === 'cancelled' || status === 'canceled') {
+  if (
+    normalized === 'cancelled' ||
+    normalized === 'canceled' ||
+    normalized === 'cancelled_after_retries' ||
+    normalized === 'canceled_after_retries'
+  ) {
     return 'canceled';
   }
   return 'processing';

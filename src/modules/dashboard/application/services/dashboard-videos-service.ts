@@ -1,7 +1,7 @@
 import { resolveApiErrorMessage } from '@/lib/api/client';
 import { mapJobToVideoItem } from '@/modules/videos/application/mappers';
 import { replaceVideosSorted, upsertVideoById } from '@/modules/videos/application/state';
-import { RealtimeUnsubscribe, VideosGateway, VideosRealtimeGateway } from '@/modules/videos/domain/contracts';
+import { DailyGenerationQuota, RealtimeUnsubscribe, VideosGateway, VideosRealtimeGateway } from '@/modules/videos/domain/contracts';
 import { CreateVideoPayload } from '@/modules/dashboard/domain/contracts';
 import { VideoJobItem } from '@/types/dashboard';
 
@@ -15,12 +15,14 @@ export const subscribeDashboardVideos = async ({
   token,
   userId,
   onJobUpdated,
+  onGenerationLimitAlert,
   onError,
 }: {
   realtime: VideosRealtimeGateway;
   token: string;
   userId: number;
   onJobUpdated: (video: VideoJobItem) => void;
+  onGenerationLimitAlert?: (quota: DailyGenerationQuota) => void;
   onError?: (error: unknown) => void;
 }): Promise<RealtimeUnsubscribe> => {
   return realtime.subscribeToUserJobs({
@@ -29,6 +31,7 @@ export const subscribeDashboardVideos = async ({
     onJobUpdated: (job) => {
       onJobUpdated(mapJobToVideoItem(job));
     },
+    onGenerationLimitAlert,
     onError,
   });
 };

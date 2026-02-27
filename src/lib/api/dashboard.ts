@@ -130,6 +130,15 @@ export interface MeResponse {
   email: string;
   username: string;
   phone_number: string | null;
+  country_code?: string | null;
+  theme_preference?: 'light' | 'dark' | 'system' | null;
+  language?: {
+    id: number | null;
+    title: string | null;
+    slug: string | null;
+  } | null;
+  roles?: string[];
+  can_access_admin?: boolean;
   active: boolean;
   credit_balance: number;
   must_reset_password: boolean;
@@ -221,6 +230,19 @@ export interface CreditPurchaseOrderResponse {
   failed_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+export interface DailyGenerationQuotaResponse {
+  daily_limit: number;
+  used_today: number;
+  remaining_today: number;
+  near_limit: boolean;
+  limit_reached: boolean;
+}
+
+export interface UpdateUserPreferencesPayload {
+  language_id?: number | null;
+  theme_preference?: 'light' | 'dark' | 'system' | null;
 }
 
 export const loginWithEmail = async (email: string, password: string, context?: LoginRequestContext) => {
@@ -408,4 +430,22 @@ export const createCreditsPurchase = async (token: string, credits: number, idem
   });
 
   return response.data;
+};
+
+export const getJobsQuota = async (token: string) => {
+  const response = await apiRequest<ResourceResponse<DailyGenerationQuotaResponse>>('/api/jobs/quota', {
+    token,
+  });
+
+  return response.data;
+};
+
+export const updateUserPreferences = async (token: string, payload: UpdateUserPreferencesPayload) => {
+  await apiRequest<ResourceResponse<MeResponse>>('/api/auth/preferences', {
+    method: 'PATCH',
+    token,
+    json: payload,
+  });
+
+  return getMe(token);
 };

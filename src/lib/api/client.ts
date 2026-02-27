@@ -8,6 +8,8 @@ interface ApiRequestOptions {
   headers?: HeadersInit;
 }
 
+type ApiLocale = 'en' | 'pt-BR' | 'it';
+
 export class ApiError extends Error {
   status: number;
 
@@ -69,6 +71,45 @@ export const isAuthApiError = (error: unknown): boolean => {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_IAVIDEO_API_URL ?? 'http://127.0.0.1:8000';
 
+let preferredApiLocale: ApiLocale | null = null;
+
+const normalizeApiLocale = (value?: string | null): ApiLocale => {
+  const normalized = value?.split(',')[0]?.trim().toLowerCase() ?? '';
+
+  if (normalized.startsWith('pt')) {
+    return 'pt-BR';
+  }
+
+  if (normalized.startsWith('it')) {
+    return 'it';
+  }
+
+  return 'en';
+};
+
+const resolveAcceptLanguage = (): ApiLocale => {
+  if (preferredApiLocale) {
+    return preferredApiLocale;
+  }
+
+  if (typeof document !== 'undefined') {
+    const htmlLanguage = document.documentElement.lang;
+    if (htmlLanguage) {
+      return normalizeApiLocale(htmlLanguage);
+    }
+  }
+
+  if (typeof navigator !== 'undefined') {
+    return normalizeApiLocale(navigator.language || navigator.languages?.[0] || null);
+  }
+
+  return 'en';
+};
+
+export const setPreferredApiLocale = (locale?: string | null) => {
+  preferredApiLocale = locale ? normalizeApiLocale(locale) : null;
+};
+
 const buildUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE_URL}${normalizedPath}`;
@@ -78,6 +119,9 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
   const { method = 'GET', token, body, json, headers } = options;
   const requestHeaders = new Headers(headers);
   requestHeaders.set('Accept', 'application/json');
+  if (!requestHeaders.has('Accept-Language')) {
+    requestHeaders.set('Accept-Language', resolveAcceptLanguage());
+  }
 
   let resolvedBody: BodyInit | null | undefined = body;
 

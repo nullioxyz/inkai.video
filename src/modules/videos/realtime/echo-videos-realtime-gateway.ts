@@ -1,5 +1,5 @@
 import { BackendJobResponse } from '@/lib/api/dashboard';
-import { RealtimeUnsubscribe, VideosRealtimeGateway } from '../domain/contracts';
+import { DailyGenerationQuota, RealtimeUnsubscribe, VideosRealtimeGateway } from '../domain/contracts';
 
 type EchoLike = {
   private: (channel: string) => {
@@ -14,6 +14,10 @@ interface JobUpdatedPayload {
   job?: BackendJobResponse;
 }
 
+interface GenerationLimitAlertPayload {
+  quota?: DailyGenerationQuota;
+}
+
 const buildAuthHeaders = (token: string) => ({
   Authorization: `Bearer ${token}`,
   Accept: 'application/json',
@@ -21,7 +25,7 @@ const buildAuthHeaders = (token: string) => ({
 
 export const createEchoVideosRealtimeGateway = (): VideosRealtimeGateway => {
   return {
-    subscribeToUserJobs: async ({ token, userId, onJobUpdated, onError }) => {
+    subscribeToUserJobs: async ({ token, userId, onJobUpdated, onGenerationLimitAlert, onError }) => {
       const socketHost = process.env.NEXT_PUBLIC_IAVIDEO_WS_HOST ?? '127.0.0.1';
       const socketPort = process.env.NEXT_PUBLIC_IAVIDEO_WS_PORT ?? '6001';
       const socketScheme = process.env.NEXT_PUBLIC_IAVIDEO_WS_SCHEME ?? 'http';
@@ -48,19 +52,32 @@ export const createEchoVideosRealtimeGateway = (): VideosRealtimeGateway => {
 
         const channelName = `user.${userId}`;
         const eventNames = ['.user-job-updated-broadcast', 'user-job-updated-broadcast'];
+        const quotaEventNames = ['.user-generation-limit-alert-broadcast', 'user-generation-limit-alert-broadcast'];
         const onPayload = (payload: unknown) => {
           const typed = payload as JobUpdatedPayload;
           if (typed?.job) {
             onJobUpdated(typed.job);
           }
         };
+        const onQuotaPayload = (payload: unknown) => {
+          const typed = payload as GenerationLimitAlertPayload;
+          if (typed?.quota && onGenerationLimitAlert) {
+            onGenerationLimitAlert(typed.quota);
+          }
+        };
 
         eventNames.forEach((eventName) => {
           echo.private(channelName).listen(eventName, onPayload);
         });
+        quotaEventNames.forEach((eventName) => {
+          echo.private(channelName).listen(eventName, onQuotaPayload);
+        });
 
         const unsubscribe: RealtimeUnsubscribe = () => {
           eventNames.forEach((eventName) => {
+            echo.private(channelName).stopListening(eventName);
+          });
+          quotaEventNames.forEach((eventName) => {
             echo.private(channelName).stopListening(eventName);
           });
           echo.leave(channelName);
