@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@/lib/api/client';
 import * as api from '@/lib/api/dashboard';
 import { createHttpVideosGateway } from '../http-videos-gateway';
 
@@ -7,10 +8,15 @@ vi.mock('@/lib/api/dashboard', () => ({
   createInput: vi.fn(),
   getJobDetail: vi.fn(),
   renameJobTitle: vi.fn(),
+  cancelJobGeneration: vi.fn(),
   cancelInputPrediction: vi.fn(),
 }));
 
 describe('http videos gateway', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('lists jobs from API response', async () => {
     vi.mocked(api.listJobs).mockResolvedValue({
       data: [
@@ -103,5 +109,32 @@ describe('http videos gateway', () => {
     expect(job.title).toBe('Novo nome');
     expect(vi.mocked(api.renameJobTitle)).toHaveBeenCalledWith('token', 22, 'Novo nome');
     expect(vi.mocked(api.getJobDetail)).toHaveBeenCalledWith('token', 22);
+  });
+
+  it('cancels a job using the new endpoint', async () => {
+    const gateway = createHttpVideosGateway();
+    await gateway.cancelJob('token', 33);
+
+    expect(vi.mocked(api.cancelJobGeneration)).toHaveBeenCalledWith('token', 33);
+    expect(vi.mocked(api.cancelInputPrediction)).not.toHaveBeenCalled();
+  });
+
+  it('falls back to legacy cancel endpoint when new endpoint is unavailable', async () => {
+    vi.mocked(api.cancelJobGeneration).mockRejectedValueOnce(new ApiError('Not found', 404, {}));
+
+    const gateway = createHttpVideosGateway();
+    await gateway.cancelJob('token', 44);
+
+    expect(vi.mocked(api.cancelJobGeneration)).toHaveBeenCalledWith('token', 44);
+    expect(vi.mocked(api.cancelInputPrediction)).toHaveBeenCalledWith('token', 44);
+  });
+
+  it('does not fallback for business/auth errors and rethrows', async () => {
+    vi.mocked(api.cancelJobGeneration).mockRejectedValueOnce(new ApiError('Unprocessable', 422, {}));
+
+    const gateway = createHttpVideosGateway();
+
+    await expect(gateway.cancelJob('token', 45)).rejects.toBeInstanceOf(ApiError);
+    expect(vi.mocked(api.cancelInputPrediction)).not.toHaveBeenCalled();
   });
 });

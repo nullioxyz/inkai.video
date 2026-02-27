@@ -1,6 +1,6 @@
 'use client';
 
-import { isAuthApiError, resolveApiErrorMessage, setPreferredApiLocale } from '@/lib/api/client';
+import { ApiError, isAuthApiError, resolveApiErrorMessage, setPreferredApiLocale } from '@/lib/api/client';
 import { clearStoredAuthToken, getStoredAuthToken } from '@/lib/auth-session';
 import { getJobsQuota, updateUserPreferences } from '@/lib/api/dashboard';
 import { fetchDashboardMe, resetDashboardPassword } from '@/modules/dashboard/application/services/dashboard-auth-service';
@@ -297,14 +297,37 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      await dashboardDependencies.videosGateway.cancelJob(token, video.inputId);
-      setVideos((current) => markCanceledVideo(current, video.id));
+      try {
+        await dashboardDependencies.videosGateway.cancelJob(token, video.inputId);
+        setVideos((current) => markCanceledVideo(current, video.id));
 
-      await fetchCredits(token).catch(() => {
-        // noop
-      });
+        await refreshJobs().catch(() => {
+          // noop
+        });
+        await fetchCredits(token).catch(() => {
+          // noop
+        });
+      } catch (error) {
+        if (isAuthApiError(error)) {
+          clearStoredAuthToken();
+          setToken(null);
+          throw error;
+        }
+
+        if (error instanceof ApiError && error.status === 422) {
+          await refreshJobs().catch(() => {
+            // noop
+          });
+          throw new Error('Este job não pode mais ser cancelado.');
+        }
+
+        await refreshJobs().catch(() => {
+          // noop
+        });
+        throw new Error(resolveApiErrorMessage(error, 'Não foi possível cancelar a geração agora.'));
+      }
     },
-    [fetchCredits, token],
+    [fetchCredits, refreshJobs, token],
   );
 
   const renameVideo = useCallback(

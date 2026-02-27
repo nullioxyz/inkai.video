@@ -1,4 +1,5 @@
-import { cancelInputPrediction, createInput, getJobDetail, listJobs, renameJobTitle } from '@/lib/api/dashboard';
+import { ApiError } from '@/lib/api/client';
+import { cancelInputPrediction, cancelJobGeneration, createInput, getJobDetail, listJobs, renameJobTitle } from '@/lib/api/dashboard';
 import { VideosGateway } from '../domain/contracts';
 
 export const createHttpVideosGateway = (): VideosGateway => {
@@ -39,7 +40,18 @@ export const createHttpVideosGateway = (): VideosGateway => {
       }
     },
     cancelJob: async (token, inputId) => {
-      await cancelInputPrediction(token, inputId);
+      try {
+        await cancelJobGeneration(token, inputId);
+      } catch (error) {
+        const shouldFallbackToLegacy =
+          error instanceof ApiError && (error.status === 404 || error.status === 405 || error.status === 501);
+
+        if (!shouldFallbackToLegacy) {
+          throw error;
+        }
+
+        await cancelInputPrediction(token, inputId);
+      }
     },
   };
 };

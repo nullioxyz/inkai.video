@@ -5,6 +5,7 @@ import { useVideoDownload } from '@/components/videos/hooks/useVideoDownload';
 import VideoPlaybackSurface from '@/components/videos/video-details/VideoPlaybackSurface';
 import { useDashboard } from '@/context/dashboard-context';
 import { useLocale } from '@/context/LocaleContext';
+import { isCancelableVideoStatus } from '@/modules/videos/application/cancel-state';
 import { parseAspectRatio, toAspectRatioLabel } from '@/modules/videos/application/player-layout';
 import type { VideoJobItem } from '@/types/dashboard';
 import { useEffect, useMemo, useState } from 'react';
@@ -19,10 +20,13 @@ interface VideoDetailsPanelProps {
 }
 
 const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actionsVisible }: VideoDetailsPanelProps) => {
-  const { token } = useDashboard();
+  const { token, cancelVideo } = useDashboard();
   const { t, intlLocale } = useLocale();
   const [detectedRatio, setDetectedRatio] = useState<number | null>(null);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [canceling, setCanceling] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [feedbackTone, setFeedbackTone] = useState<'success' | 'error'>('success');
   const { downloading, canDownloadFromBackend, download } = useVideoDownload({
     inputId: video.inputId,
     token,
@@ -30,7 +34,8 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
   });
   const createdAt = video.createdAt ? new Date(video.createdAt).toLocaleString(intlLocale) : '-';
   const isProcessing = video.status === 'processing';
-  const showActions = actionsVisible ?? !isProcessing;
+  const isCancelable = isCancelableVideoStatus(video.status);
+  const showPrimaryActions = actionsVisible ?? !isProcessing;
   const hasVideoOutput = Boolean(video.videoUrl);
   const formatFromPayload = parseAspectRatio(video.format);
   const formatLabel = useMemo(() => {
@@ -49,6 +54,18 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
     setDetectedRatio(null);
     setVideoLoading(true);
   }, [video.videoUrl]);
+
+  useEffect(() => {
+    if (!feedbackMessage) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setFeedbackMessage(null);
+    }, 3200);
+
+    return () => window.clearTimeout(timeout);
+  }, [feedbackMessage]);
 
   return (
     <section className="py-3 md:py-5">
@@ -76,11 +93,33 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
 
                 {!hideActions && (
                   <VideoDetailsActions
-                    showActions={showActions}
+                    showPrimaryActions={showPrimaryActions}
+                    showCancelAction={isCancelable}
                     canDownload={!isProcessing && hasVideoOutput && canDownloadFromBackend}
                     downloading={downloading}
+                    canceling={canceling}
                     onDownload={() => {
                       void download();
+                    }}
+                    onCancel={() => {
+                      if (canceling) {
+                        return;
+                      }
+
+                      setCanceling(true);
+                      void cancelVideo(video)
+                        .then(() => {
+                          setFeedbackTone('success');
+                          setFeedbackMessage(t('dashboard.cancelGenerationSuccess'));
+                        })
+                        .catch((error) => {
+                          const message = error instanceof Error && error.message ? error.message : t('dashboard.cancelGenerationError');
+                          setFeedbackTone('error');
+                          setFeedbackMessage(message);
+                        })
+                        .finally(() => {
+                          setCanceling(false);
+                        });
                     }}
                     onCreateNewVideo={onCreateNewVideo}
                     t={t}
@@ -91,6 +130,16 @@ const VideoDetailsPanel = ({ video, onCreateNewVideo, hideActions = false, actio
           </RevealAnimation>
         </div>
       </div>
+      {feedbackMessage ? (
+        <div className="fixed right-5 bottom-5 z-[60]">
+          <div
+            className={`min-w-[240px] max-w-[360px] rounded-sm px-4 py-3 text-sm ${
+              feedbackTone === 'success' ? 'bg-ns-green/15 text-ns-green' : 'bg-ns-red/15 text-ns-red'
+            }`}>
+            {feedbackMessage}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 };

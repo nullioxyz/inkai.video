@@ -344,6 +344,13 @@ export const cancelInputPrediction = async (token: string, inputId: number) => {
   });
 };
 
+export const cancelJobGeneration = async (token: string, jobId: number) => {
+  await apiRequest(`/api/jobs/${jobId}/cancel`, {
+    method: 'POST',
+    token,
+  });
+};
+
 export const listJobs = async (token: string, page = 1, perPage = 100) => {
   const response = await apiRequest<PaginatedResponse<BackendJobResponse>>(`/api/jobs?page=${page}&per_page=${perPage}`, {
     token,
