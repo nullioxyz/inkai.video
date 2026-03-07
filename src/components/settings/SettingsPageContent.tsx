@@ -27,6 +27,10 @@ const SettingsPageContent = () => {
     setSelectedThemePreference(themePreference);
   }, [themePreference]);
 
+  useEffect(() => {
+    setTheme(selectedThemePreference);
+  }, [selectedThemePreference, setTheme]);
+
   const languageOptions = useMemo(() => getConfiguredBackendLanguageOptions(), []);
   const selectedLanguageHasOption = selectedLanguageId ? languageOptions.some((item) => item.id === selectedLanguageId) : true;
   const canPersistLanguage = languageOptions.length > 0 || selectedLanguageHasOption;
@@ -41,7 +45,6 @@ const SettingsPageContent = () => {
       return;
     }
 
-    setTheme(selectedThemePreference);
     const localeFromId = resolveLocaleByLanguageId(selectedLanguageId);
     if (localeFromId) {
       setLocale(localeFromId);
