@@ -10,7 +10,11 @@ interface VideoDetailsInfoProps {
 }
 
 const VideoDetailsInfo = ({ video, formatLabel, createdAt, t }: VideoDetailsInfoProps) => {
+  const modelLabel = video.modelName?.trim() ? video.modelName : '-';
   const presetLabel = video.presetName?.trim() ? video.presetName : '-';
+  const durationLabel = video.durationSeconds !== null && video.durationSeconds !== undefined ? `${video.durationSeconds}s` : '-';
+  const creditsLabel = video.creditsUsed !== null && video.creditsUsed !== undefined ? String(video.creditsUsed) : '-';
+  const estimatedCostLabel = video.estimatedCostUsd ? `$${video.estimatedCostUsd}` : '-';
 
   return (
     <>
@@ -33,8 +37,24 @@ const VideoDetailsInfo = ({ video, formatLabel, createdAt, t }: VideoDetailsInfo
           </dd>
         </div>
         <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+          <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoModel')}</dt>
+          <dd className="text-secondary dark:text-accent break-words">{modelLabel}</dd>
+        </div>
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
           <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoPreset')}</dt>
           <dd className="text-secondary dark:text-accent break-words">{presetLabel}</dd>
+        </div>
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+          <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoDuration')}</dt>
+          <dd className="text-secondary dark:text-accent break-words">{durationLabel}</dd>
+        </div>
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+          <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoCreditsCharged')}</dt>
+          <dd className="text-secondary dark:text-accent break-words">{creditsLabel}</dd>
+        </div>
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+          <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoEstimatedCost')}</dt>
+          <dd className="text-secondary dark:text-accent break-words">{estimatedCostLabel}</dd>
         </div>
         <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
           <dt className="text-secondary/60 dark:text-accent/60">{t('dashboard.videoCreatedAt')}</dt>

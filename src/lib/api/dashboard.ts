@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { ApiError, apiRequest } from './client';
 import { LoginRequestContext, buildLoginRequestHeaders, resolveBrowserLoginContext } from './login-context';
 
 interface ResourceResponse<T> {
@@ -36,8 +36,13 @@ export interface BackendModel {
   platform_id: number;
   name: string;
   slug: string;
+  provider_model_key?: string | null;
   version: string | null;
   active: boolean;
+  public_visible?: boolean;
+  available_for_generation?: boolean;
+  cost_per_second_usd?: string | null;
+  sort_order?: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -70,6 +75,7 @@ export interface BackendPresetFiltersResponse {
 
 export interface CreatedInputResponse {
   id: number;
+  model_id: number;
   preset_id: number;
   user_id: number;
   status: 'created' | 'processing' | 'done' | 'failed' | 'cancelled';
@@ -77,12 +83,16 @@ export interface CreatedInputResponse {
   original_filename: string | null;
   mime_type: string | null;
   size_bytes: number | null;
+  duration_seconds?: number | null;
+  estimated_cost_usd?: string | null;
+  credits_charged?: number;
+  billing_status?: string | null;
 }
 
 export interface PredictionOutputResponse {
   id: number;
   kind: 'video' | 'thumbnail' | 'gif';
-  path: string;
+  path: string | null;
   mime_type: string | null;
   size_bytes: number | null;
   file_url: string | null;
@@ -101,6 +111,9 @@ export interface PredictionResponse {
   finished_at: string | null;
   failed_at: string | null;
   canceled_at: string | null;
+  duration_seconds?: number | null;
+  cost_estimate_usd?: string | null;
+  cost_actual_usd?: string | null;
   error_code: string | null;
   error_message: string | null;
   outputs: PredictionOutputResponse[];
@@ -108,8 +121,16 @@ export interface PredictionResponse {
   updated_at: string | null;
 }
 
+export interface BackendModelSummary {
+  id: number;
+  name: string;
+  provider_model_key?: string | null;
+}
+
 export interface BackendJobResponse {
   id: number;
+  model_id?: number | null;
+  model?: BackendModelSummary | null;
   preset_id: number;
   preset?: {
     id: number;
@@ -121,11 +142,25 @@ export interface BackendJobResponse {
   original_filename: string | null;
   mime_type: string | null;
   size_bytes: number | null;
+  duration_seconds?: number | null;
+  estimated_cost_usd?: string | null;
+  credits_charged?: number;
+  billing_status?: string | null;
   credit_debited: boolean;
   start_image_url: string | null;
   prediction: PredictionResponse | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+export interface BackendGenerationEstimateResponse {
+  model_id: number;
+  preset_id: number;
+  duration_seconds: number;
+  credits_required: number;
+  model_cost_per_second_usd: string | null;
+  estimated_generation_cost_usd: string | null;
+  credit_unit_value_usd: string | null;
 }
 
 export interface MeResponse {
@@ -323,13 +358,47 @@ export const listPresetFiltersByModel = async (token: string, modelId: number) =
   return response.data;
 };
 
-export const createInput = async (token: string, presetId: number, image: File, title?: string) => {
+export const estimateInput = async (
+  token: string,
+  payload: {
+    modelId: number;
+    presetId: number;
+    durationSeconds?: number | null;
+  },
+) => {
+  const response = await apiRequest<ResourceResponse<BackendGenerationEstimateResponse>>('/api/input/estimate', {
+    method: 'POST',
+    token,
+    json: {
+      model_id: payload.modelId,
+      preset_id: payload.presetId,
+      ...(payload.durationSeconds !== null && payload.durationSeconds !== undefined ? { duration_seconds: payload.durationSeconds } : {}),
+    },
+  });
+
+  return response.data;
+};
+
+export const createInput = async (
+  token: string,
+  payload: {
+    modelId: number;
+    presetId: number;
+    image: File;
+    title?: string;
+    durationSeconds?: number | null;
+  },
+) => {
   const formData = new FormData();
-  formData.append('preset_id', String(presetId));
-  if (title && title.trim() !== '') {
-    formData.append('title', title.trim());
+  formData.append('model_id', String(payload.modelId));
+  formData.append('preset_id', String(payload.presetId));
+  if (payload.title && payload.title.trim() !== '') {
+    formData.append('title', payload.title.trim());
   }
-  formData.append('image', image);
+  if (payload.durationSeconds !== null && payload.durationSeconds !== undefined) {
+    formData.append('duration_seconds', String(payload.durationSeconds));
+  }
+  formData.append('image', payload.image);
 
   const response = await apiRequest<ResourceResponse<CreatedInputResponse>>('/api/input/create', {
     method: 'POST',
@@ -385,6 +454,13 @@ export const getMe = async (token: string) => {
   const response = await apiRequest<ResourceResponse<MeResponse>>('/api/auth/me', {
     token,
   });
+
+  if (!response || typeof response !== 'object' || !('data' in response) || !(response as ResourceResponse<MeResponse>).data) {
+    throw new ApiError('Session expired', 401, {
+      status: 204,
+      message: 'No content from /api/auth/me',
+    });
+  }
 
   return response.data;
 };

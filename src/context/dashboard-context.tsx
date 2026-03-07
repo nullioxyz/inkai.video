@@ -1,13 +1,16 @@
 'use client';
 
-import { ApiError, isAuthApiError, resolveApiErrorMessage, setPreferredApiLocale } from '@/lib/api/client';
+import { ApiError, resolveApiErrorMessage, setPreferredApiLocale } from '@/lib/api/client';
 import { clearStoredAuthToken, getStoredAuthToken } from '@/lib/auth-session';
 import { getJobsQuota, updateUserPreferences } from '@/lib/api/dashboard';
+import SessionExpiredLoginModal from '@/components/authentication/SessionExpiredLoginModal';
+import { isSessionExpiredError } from '@/modules/dashboard/application/session-expiration';
 import { fetchDashboardMe, resetDashboardPassword } from '@/modules/dashboard/application/services/dashboard-auth-service';
 import { fetchDashboardCredits } from '@/modules/dashboard/application/services/dashboard-credits-service';
-import { fetchDashboardPresets } from '@/modules/dashboard/application/services/dashboard-presets-service';
+import { fetchDashboardGenerationCatalog } from '@/modules/dashboard/application/services/dashboard-presets-service';
 import {
   createDashboardVideo,
+  estimateDashboardVideo,
   fetchDashboardVideos,
   makeFallbackCreatedVideo,
   markCanceledVideo,
@@ -15,11 +18,11 @@ import {
   subscribeDashboardVideos,
   upsertSortedVideo,
 } from '@/modules/dashboard/application/services/dashboard-videos-service';
-import { CreateVideoPayload, DashboardContextType } from '@/modules/dashboard/domain/contracts';
+import { CreateVideoPayload, DashboardContextType, EstimateVideoPayload } from '@/modules/dashboard/domain/contracts';
 import { dashboardDependencies } from '@/modules/dashboard/infra/dependencies';
 import { CreditStatementEntryViewModel, CreditVideoGenerationViewModel } from '@/modules/credits/domain/view-models';
 import { DailyGenerationQuota } from '@/modules/videos/domain/contracts';
-import { PresetItem, VideoJobItem } from '@/types/dashboard';
+import { ModelItem, PresetItem, VideoJobItem } from '@/types/dashboard';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type { CreateVideoPayload, DashboardContextType } from '@/modules/dashboard/domain/contracts';
@@ -29,6 +32,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export const DashboardProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState('');
@@ -44,8 +48,9 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const [videos, setVideos] = useState<VideoJobItem[]>([]);
-  const [presets, setPresets] = useState<PresetItem[]>([]);
-  const [presetCategories, setPresetCategories] = useState<string[]>([]);
+  const [models, setModels] = useState<ModelItem[]>([]);
+  const [presetsByModelId, setPresetsByModelId] = useState<Record<string, PresetItem[]>>({});
+  const [presetCategoriesByModelId, setPresetCategoriesByModelId] = useState<Record<string, string[]>>({});
 
   const [creditBalance, setCreditBalance] = useState(0);
   const [creditStatement, setCreditStatement] = useState<CreditStatementEntryViewModel[]>([]);
@@ -61,6 +66,20 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     setIsHydrated(true);
   }, []);
 
+  const markSessionExpired = useCallback(() => {
+    clearStoredAuthToken();
+    setToken(null);
+    setSessionExpired(true);
+  }, []);
+
+  const restoreSession = useCallback((nextToken: string) => {
+    setJobsError(null);
+    setPresetsError(null);
+    setQuotaError(null);
+    setSessionExpired(false);
+    setToken(nextToken);
+  }, []);
+
   const fetchCredits = useCallback(async (activeToken: string) => {
     const credits = await fetchDashboardCredits(activeToken);
     setCreditBalance(credits.creditBalance);
@@ -72,6 +91,20 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     const rows = await fetchDashboardVideos(dashboardDependencies.videosGateway, activeToken);
     setVideos(rows);
   }, []);
+
+  const checkSessionAlive = useCallback(async () => {
+    if (!token || sessionExpired) {
+      return;
+    }
+
+    try {
+      await fetchDashboardMe(dashboardDependencies.authGateway, token);
+    } catch (error) {
+      if (isSessionExpiredError(error)) {
+        markSessionExpired();
+      }
+    }
+  }, [markSessionExpired, sessionExpired, token]);
 
   useEffect(() => {
     if (!token) {
@@ -89,8 +122,9 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       setQuotaError(null);
       setRealtimeConnected(false);
       setVideos([]);
-      setPresets([]);
-      setPresetCategories([]);
+      setModels([]);
+      setPresetsByModelId({});
+      setPresetCategoriesByModelId({});
       setCreditBalance(0);
       setCreditStatement([]);
       setCreditVideoGenerations([]);
@@ -104,10 +138,10 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       setPresetsError(null);
 
       try {
-        const [me, loadedVideos, loadedPresets, loadedCredits, loadedQuota] = await Promise.all([
+        const [me, loadedVideos, loadedGenerationCatalog, loadedCredits, loadedQuota] = await Promise.all([
           fetchDashboardMe(dashboardDependencies.authGateway, token),
           fetchDashboardVideos(dashboardDependencies.videosGateway, token),
-          fetchDashboardPresets(dashboardDependencies.presetsGateway, token),
+          fetchDashboardGenerationCatalog(dashboardDependencies.presetsGateway, token),
           fetchDashboardCredits(token),
           getJobsQuota(token),
         ]);
@@ -126,16 +160,16 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         setQuotaError(null);
 
         setVideos(loadedVideos);
-        setPresets(loadedPresets.presets);
-        setPresetCategories(loadedPresets.presetCategories);
+        setModels(loadedGenerationCatalog.models);
+        setPresetsByModelId(loadedGenerationCatalog.presetsByModelId);
+        setPresetCategoriesByModelId(loadedGenerationCatalog.presetCategoriesByModelId);
 
         setCreditBalance(loadedCredits.creditBalance);
         setCreditStatement(loadedCredits.creditStatement);
         setCreditVideoGenerations(loadedCredits.creditVideoGenerations);
       } catch (error) {
-        if (isAuthApiError(error)) {
-          clearStoredAuthToken();
-          setToken(null);
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
           return;
         }
 
@@ -149,7 +183,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     };
 
     void loadDashboard();
-  }, [token]);
+  }, [markSessionExpired, token]);
 
   const refreshQuota = useCallback(async () => {
     if (!token) {
@@ -162,15 +196,16 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       setQuotaError(null);
       return nextQuota;
     } catch (error) {
+      if (isSessionExpiredError(error)) {
+        markSessionExpired();
+        return null;
+      }
+
       const message = resolveApiErrorMessage(error, 'Falha ao carregar cota diária.');
       setQuotaError(message);
-      if (isAuthApiError(error)) {
-        clearStoredAuthToken();
-        setToken(null);
-      }
       return null;
     }
-  }, [token]);
+  }, [markSessionExpired, token]);
 
   useEffect(() => {
     if (!token || !userId) {
@@ -185,15 +220,24 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       userId,
       onJobUpdated: (video) => {
         setVideos((current) => upsertSortedVideo(current, video));
-        void fetchCredits(token).catch(() => {
-          // noop
+        void fetchCredits(token).catch((error) => {
+          if (isSessionExpiredError(error)) {
+            markSessionExpired();
+          }
         });
       },
       onGenerationLimitAlert: (nextQuota) => {
         setQuota(nextQuota);
         setQuotaError(null);
       },
-      onError: () => {
+      onSessionLoggedOut: () => {
+        markSessionExpired();
+      },
+      onError: (error) => {
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
+          return;
+        }
         setRealtimeConnected(false);
       },
     }).then((stop) => {
@@ -205,7 +249,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       setRealtimeConnected(false);
       unsubscribe?.();
     };
-  }, [fetchCredits, token, userId]);
+  }, [fetchCredits, markSessionExpired, token, userId]);
 
   useEffect(() => {
     if (!token) {
@@ -215,8 +259,10 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     const interval = window.setInterval(() => {
       const hasProcessingJobs = videos.some((video) => video.status === 'processing');
       if (hasProcessingJobs) {
-        void fetchJobs(token).catch(() => {
-          // noop
+        void fetchJobs(token).catch((error) => {
+          if (isSessionExpiredError(error)) {
+            markSessionExpired();
+          }
         });
       }
     }, 12000);
@@ -224,7 +270,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       window.clearInterval(interval);
     };
-  }, [fetchJobs, token, videos]);
+  }, [fetchJobs, markSessionExpired, token, videos]);
 
   useEffect(() => {
     if (!token) {
@@ -232,15 +278,42 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const interval = window.setInterval(() => {
-      void fetchCredits(token).catch(() => {
-        // noop
+      void fetchCredits(token).catch((error) => {
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
+        }
       });
     }, 30000);
 
     return () => {
       window.clearInterval(interval);
     };
-  }, [fetchCredits, token]);
+  }, [fetchCredits, markSessionExpired, token]);
+
+  useEffect(() => {
+    if (!token || sessionExpired) {
+      return;
+    }
+
+    void checkSessionAlive();
+
+    const interval = window.setInterval(() => {
+      void checkSessionAlive();
+    }, 60000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void checkSessionAlive();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [checkSessionAlive, sessionExpired, token]);
 
   const refreshJobs = useCallback(async () => {
     if (!token) {
@@ -252,11 +325,38 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     try {
       await fetchJobs(token);
     } catch (error) {
+      if (isSessionExpiredError(error)) {
+        markSessionExpired();
+        return;
+      }
       setJobsError(resolveApiErrorMessage(error, 'Falha ao atualizar jobs'));
     } finally {
       setLoadingJobs(false);
     }
-  }, [fetchJobs, token]);
+  }, [fetchJobs, markSessionExpired, token]);
+
+  const estimateVideoGeneration = useCallback(
+    async (payload: EstimateVideoPayload) => {
+      if (!token) {
+        throw new Error('Você precisa estar logado para estimar a geração.');
+      }
+
+      try {
+        return await estimateDashboardVideo({
+          gateway: dashboardDependencies.videosGateway,
+          token,
+          payload,
+        });
+      } catch (error) {
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
+        }
+
+        throw error;
+      }
+    },
+    [markSessionExpired, token],
+  );
 
   const createVideo = useCallback(
     async (payload: CreateVideoPayload) => {
@@ -269,11 +369,19 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Você atingiu o limite diário de gerações. Entre em contato com o suporte para ampliar sua cota.');
       }
 
-      const created = await createDashboardVideo({
-        gateway: dashboardDependencies.videosGateway,
-        token,
-        payload,
-      });
+      let created: VideoJobItem | null = null;
+      try {
+        created = await createDashboardVideo({
+          gateway: dashboardDependencies.videosGateway,
+          token,
+          payload,
+        });
+      } catch (error) {
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
+        }
+        throw error;
+      }
 
       if (!created) {
         await refreshJobs();
@@ -281,14 +389,16 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setVideos((current) => upsertSortedVideo(current, created));
-      await fetchCredits(token).catch(() => {
-        // noop
+      await fetchCredits(token).catch((error) => {
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
+        }
       });
       await refreshQuota();
 
       return created;
     },
-    [fetchCredits, refreshJobs, refreshQuota, token],
+    [fetchCredits, markSessionExpired, refreshJobs, refreshQuota, token],
   );
 
   const cancelVideo = useCallback(
@@ -301,16 +411,19 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         await dashboardDependencies.videosGateway.cancelJob(token, video.inputId);
         setVideos((current) => markCanceledVideo(current, video.id));
 
-        await refreshJobs().catch(() => {
-          // noop
+        await refreshJobs().catch((error) => {
+          if (isSessionExpiredError(error)) {
+            markSessionExpired();
+          }
         });
-        await fetchCredits(token).catch(() => {
-          // noop
+        await fetchCredits(token).catch((error) => {
+          if (isSessionExpiredError(error)) {
+            markSessionExpired();
+          }
         });
       } catch (error) {
-        if (isAuthApiError(error)) {
-          clearStoredAuthToken();
-          setToken(null);
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
           throw error;
         }
 
@@ -327,7 +440,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(resolveApiErrorMessage(error, 'Não foi possível cancelar a geração agora.'));
       }
     },
-    [fetchCredits, refreshJobs, token],
+    [fetchCredits, markSessionExpired, refreshJobs, token],
   );
 
   const renameVideo = useCallback(
@@ -415,24 +528,25 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         setCanAccessAdmin(Boolean(me.can_access_admin));
         setMustResetPassword(me.must_reset_password);
       } catch (error) {
-        if (isAuthApiError(error)) {
-          clearStoredAuthToken();
-          setToken(null);
+        if (isSessionExpiredError(error)) {
+          markSessionExpired();
         }
         throw error;
       }
     },
-    [token],
+    [markSessionExpired, token],
   );
 
   const logout = useCallback(() => {
     clearStoredAuthToken();
+    setSessionExpired(false);
     setToken(null);
   }, []);
 
   const contextValue: DashboardContextType = useMemo(
     () => ({
       token,
+      sessionExpired,
       isHydrated,
       userId,
       userName,
@@ -450,19 +564,23 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       creditStatement,
       creditVideoGenerations,
       videos,
-      presets,
-      presetCategories,
+      models,
+      presetsByModelId,
+      presetCategoriesByModelId,
       loadingPresets,
       loadingJobs,
       jobsError,
       presetsError,
       createVideo,
+      estimateVideoGeneration,
       refreshQuota,
       updatePreferences: updatePreferencesInContext,
       renameVideo,
       resetPassword,
       cancelVideo,
       refreshJobs,
+      restoreSession,
+      markSessionExpired,
       logout,
     }),
     [
@@ -471,6 +589,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       creditBalance,
       creditStatement,
       creditVideoGenerations,
+      estimateVideoGeneration,
       isHydrated,
       jobsError,
       loadingJobs,
@@ -478,8 +597,10 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       logout,
       mustResetPassword,
       canAccessAdmin,
-      presetCategories,
-      presets,
+      markSessionExpired,
+      models,
+      presetCategoriesByModelId,
+      presetsByModelId,
       presetsError,
       refreshJobs,
       refreshQuota,
@@ -487,6 +608,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       resetPassword,
       updatePreferencesInContext,
       token,
+      sessionExpired,
       userEmail,
       userLanguageId,
       userLanguageSlug,
@@ -498,10 +620,16 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       quota,
       quotaError,
       realtimeConnected,
+      restoreSession,
     ],
   );
 
-  return <DashboardContext.Provider value={contextValue}>{children}</DashboardContext.Provider>;
+  return (
+    <DashboardContext.Provider value={contextValue}>
+      {children}
+      <SessionExpiredLoginModal open={sessionExpired && !token} onRestoreSession={restoreSession} />
+    </DashboardContext.Provider>
+  );
 };
 
 export const useDashboard = () => {

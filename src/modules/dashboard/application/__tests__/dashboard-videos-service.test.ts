@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDashboardVideo, makeFallbackCreatedVideo, markCanceledVideo, upsertSortedVideo } from '../services/dashboard-videos-service';
+import { createDashboardVideo, estimateDashboardVideo, makeFallbackCreatedVideo, markCanceledVideo, upsertSortedVideo } from '../services/dashboard-videos-service';
 
 describe('dashboard videos service', () => {
   it('marks selected video as canceled', () => {
@@ -22,11 +22,20 @@ describe('dashboard videos service', () => {
     expect(result[0].status).toBe('canceled');
   });
 
-  it('creates fallback item when API cannot return created job detail', () => {
+  it('creates fallback item with estimated credits and model metadata', () => {
     const fallback = makeFallbackCreatedVideo({
       title: 'Tattoo',
       imageFile: {} as File,
       imageSrc: '/img.png',
+      model: {
+        id: '9',
+        backendModelId: 9,
+        name: 'Kling',
+        slug: 'kling',
+        availableForGeneration: true,
+        publicVisible: true,
+        sortOrder: 1,
+      },
       preset: {
         id: '1',
         category: '9:16',
@@ -35,10 +44,62 @@ describe('dashboard videos service', () => {
         imageSrc: '/preset.png',
         backendPresetId: 10,
       },
+      durationSeconds: 8,
+      estimatedCreditsRequired: 3,
+      estimatedGenerationCostUsd: '0.7500',
     });
 
     expect(fallback.title).toBe('Tattoo');
     expect(fallback.status).toBe('processing');
+    expect(fallback.modelName).toBe('Kling');
+    expect(fallback.creditsUsed).toBe(3);
+    expect(fallback.estimatedCostUsd).toBe('0.7500');
+  });
+
+  it('estimates generation through gateway and maps response', async () => {
+    const gateway = {
+      estimateJob: vi.fn().mockResolvedValue({
+        model_id: 9,
+        preset_id: 8,
+        duration_seconds: 8,
+        credits_required: 3,
+        model_cost_per_second_usd: '0.1500',
+        estimated_generation_cost_usd: '0.7500',
+        credit_unit_value_usd: '0.3500',
+      }),
+    };
+
+    const estimate = await estimateDashboardVideo({
+      gateway: gateway as never,
+      token: 'token',
+      payload: {
+        model: {
+          id: '9',
+          backendModelId: 9,
+          name: 'Kling',
+          slug: 'kling',
+          availableForGeneration: true,
+          publicVisible: true,
+          sortOrder: 1,
+        },
+        preset: {
+          id: '8',
+          category: '9:16',
+          name: 'Preset',
+          description: 'desc',
+          imageSrc: '/preset.png',
+          backendPresetId: 8,
+        },
+        durationSeconds: 8,
+      },
+    });
+
+    expect(estimate.creditsRequired).toBe(3);
+    expect(gateway.estimateJob).toHaveBeenCalledWith('token', {
+      modelId: 9,
+      presetId: 8,
+      durationSeconds: 8,
+    });
   });
 
   it('returns null when gateway create flow cannot resolve detail', async () => {
@@ -53,6 +114,15 @@ describe('dashboard videos service', () => {
         title: 'x',
         imageFile: {} as File,
         imageSrc: '/x.png',
+        model: {
+          id: '9',
+          backendModelId: 9,
+          name: 'Kling',
+          slug: 'kling',
+          availableForGeneration: true,
+          publicVisible: true,
+          sortOrder: 1,
+        },
         preset: {
           id: '1',
           category: '9:16',

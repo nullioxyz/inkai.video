@@ -1,6 +1,6 @@
 'use client';
 
-import type { VideoJobItem, PresetItem } from '@/types/dashboard';
+import type { GenerationEstimate, ModelItem, PresetItem, VideoJobItem } from '@/types/dashboard';
 import { DailyGenerationQuota } from '@/modules/videos/domain/contracts';
 import GenerationViewHeader from './dashboard/GenerationViewHeader';
 import GenerationQuotaBanner from './dashboard/GenerationQuotaBanner';
@@ -13,41 +13,52 @@ interface GenerateVideoPayload {
   title: string;
   imageFile: File;
   imageSrc: string;
-  format: string;
-  prompt: string;
+  model: ModelItem;
   preset: PresetItem;
+  durationSeconds?: number | null;
+  estimatedCreditsRequired?: number;
+  estimatedGenerationCostUsd?: string | null;
 }
 
 interface VideoGenerationDashboardProps {
-  presets: PresetItem[];
-  presetCategories: string[];
+  models: ModelItem[];
+  presetsByModelId: Record<string, PresetItem[]>;
+  presetCategoriesByModelId: Record<string, string[]>;
   loadingPresets?: boolean;
   presetsError?: string | null;
   quota?: DailyGenerationQuota | null;
   quotaError?: string | null;
+  creditBalance: number;
+  onEstimateVideo: (payload: { model: ModelItem; preset: PresetItem; durationSeconds?: number | null }) => Promise<GenerationEstimate>;
   onGenerateVideo: (payload: GenerateVideoPayload) => Promise<VideoJobItem>;
   animateInTrigger?: number;
 }
 
 const VideoGenerationDashboard = ({
-  presets,
-  presetCategories,
+  models,
+  presetsByModelId,
+  presetCategoriesByModelId,
   loadingPresets = false,
   presetsError = null,
   quota = null,
   quotaError = null,
+  creditBalance,
+  onEstimateVideo,
   onGenerateVideo,
   animateInTrigger = 0,
 }: VideoGenerationDashboardProps) => {
   return (
     <VideoGenerationFormProvider>
       <VideoGenerationDashboardContent
-        presets={presets}
-        presetCategories={presetCategories}
+        models={models}
+        presetsByModelId={presetsByModelId}
+        presetCategoriesByModelId={presetCategoriesByModelId}
         loadingPresets={loadingPresets}
         presetsError={presetsError}
         quota={quota}
         quotaError={quotaError}
+        creditBalance={creditBalance}
+        onEstimateVideo={onEstimateVideo}
         onGenerateVideo={onGenerateVideo}
         animateInTrigger={animateInTrigger}
       />
@@ -56,12 +67,15 @@ const VideoGenerationDashboard = ({
 };
 
 const VideoGenerationDashboardContent = ({
-  presets,
-  presetCategories,
+  models,
+  presetsByModelId,
+  presetCategoriesByModelId,
   loadingPresets = false,
   presetsError = null,
   quota = null,
   quotaError = null,
+  creditBalance,
+  onEstimateVideo,
   onGenerateVideo,
   animateInTrigger = 0,
 }: VideoGenerationDashboardProps) => {
@@ -70,17 +84,29 @@ const VideoGenerationDashboardContent = ({
     previewVideo,
     isEnteringFromDetail,
     selectedCategory,
+    selectedModel,
     filteredPresets,
-    errorMessage,
     selectedPreset,
+    isGenerating,
+    disabledReason,
+    generationErrorMessage,
+    estimateErrorMessage,
+    canGenerate,
+    hasInsufficientBalance,
+    emptyPresetsMessage,
+    generateButtonLabel,
     setSelectedCategory,
+    setSelectedModelId,
     setSelectedPresetId,
     handleGenerate,
     handleResetCreation,
-    canGenerate,
   } = useVideoGenerationDashboard({
-    presets,
-    presetCategories,
+    models,
+    presetsByModelId,
+    presetCategoriesByModelId,
+    creditBalance,
+    quotaReached: Boolean(quota?.limit_reached),
+    onEstimateVideo,
     onGenerateVideo,
     animateInTrigger,
   });
@@ -98,7 +124,10 @@ const VideoGenerationDashboardContent = ({
           {!previewVideo ? (
             <VideoGenerationCreateView
               isTransitioning={isTransitioning}
-              presetCategories={presetCategories}
+              models={models}
+              selectedModelId={selectedModel?.id ?? null}
+              onSelectModel={setSelectedModelId}
+              presetCategories={selectedModel ? presetCategoriesByModelId[selectedModel.id] ?? [] : []}
               selectedCategory={selectedCategory ?? ''}
               onSelectCategory={setSelectedCategory}
               loadingPresets={loadingPresets}
@@ -106,7 +135,13 @@ const VideoGenerationDashboardContent = ({
               filteredPresets={filteredPresets}
               selectedPresetId={selectedPreset?.id ?? null}
               onSelectPreset={setSelectedPresetId}
-              errorMessage={errorMessage}
+              isGenerating={isGenerating}
+              disabledReason={disabledReason}
+              generationErrorMessage={generationErrorMessage}
+              estimateErrorMessage={estimateErrorMessage}
+              emptyPresetsMessage={emptyPresetsMessage}
+              hasInsufficientBalance={hasInsufficientBalance}
+              generateButtonLabel={generateButtonLabel}
               onGenerate={handleGenerate}
               canGenerate={canGenerate}
             />

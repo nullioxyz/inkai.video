@@ -1,9 +1,9 @@
-import { resolveApiErrorMessage } from '@/lib/api/client';
-import { mapJobToVideoItem } from '@/modules/videos/application/mappers';
+import { ApiError, resolveApiErrorMessage } from '@/lib/api/client';
+import { mapGenerationEstimateToViewModel, mapJobToVideoItem } from '@/modules/videos/application/mappers';
 import { replaceVideosSorted, upsertVideoById } from '@/modules/videos/application/state';
 import { DailyGenerationQuota, RealtimeUnsubscribe, VideosGateway, VideosRealtimeGateway } from '@/modules/videos/domain/contracts';
-import { CreateVideoPayload } from '@/modules/dashboard/domain/contracts';
-import { VideoJobItem } from '@/types/dashboard';
+import { CreateVideoPayload, EstimateVideoPayload } from '@/modules/dashboard/domain/contracts';
+import { GenerationEstimate, VideoJobItem } from '@/types/dashboard';
 
 export const fetchDashboardVideos = async (gateway: VideosGateway, token: string, page = 1, perPage = 100): Promise<VideoJobItem[]> => {
   const rows = await gateway.listJobs(token, page, perPage);
@@ -16,6 +16,7 @@ export const subscribeDashboardVideos = async ({
   userId,
   onJobUpdated,
   onGenerationLimitAlert,
+  onSessionLoggedOut,
   onError,
 }: {
   realtime: VideosRealtimeGateway;
@@ -23,6 +24,7 @@ export const subscribeDashboardVideos = async ({
   userId: number;
   onJobUpdated: (video: VideoJobItem) => void;
   onGenerationLimitAlert?: (quota: DailyGenerationQuota) => void;
+  onSessionLoggedOut?: (payload: { reason?: string; logged_out_at?: string; type?: string }) => void;
   onError?: (error: unknown) => void;
 }): Promise<RealtimeUnsubscribe> => {
   return realtime.subscribeToUserJobs({
@@ -32,6 +34,7 @@ export const subscribeDashboardVideos = async ({
       onJobUpdated(mapJobToVideoItem(job));
     },
     onGenerationLimitAlert,
+    onSessionLoggedOut,
     onError,
   });
 };
@@ -45,12 +48,22 @@ export const createDashboardVideo = async ({
   token: string;
   payload: CreateVideoPayload;
 }): Promise<VideoJobItem | null> => {
+  if (!payload.model.backendModelId) {
+    throw new Error('Modelo inválido para geração.');
+  }
+
   if (!payload.preset.backendPresetId) {
     throw new Error('Preset inválido para geração.');
   }
 
   try {
-    const createdJob = await gateway.createJob(token, payload.preset.backendPresetId, payload.imageFile, payload.title);
+    const createdJob = await gateway.createJob(token, {
+      modelId: payload.model.backendModelId,
+      presetId: payload.preset.backendPresetId,
+      durationSeconds: payload.durationSeconds ?? payload.preset.durationSeconds ?? null,
+      image: payload.imageFile,
+      title: payload.title,
+    });
     if (!createdJob) {
       return null;
     }
@@ -58,10 +71,49 @@ export const createDashboardVideo = async ({
     const mapped = mapJobToVideoItem(createdJob);
     mapped.title = payload.title || mapped.title;
     mapped.imageSrc = payload.imageSrc || mapped.imageSrc;
+    mapped.modelName = mapped.modelName || payload.model.name;
     mapped.presetName = mapped.presetName || payload.preset.name;
     return mapped;
   } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 419)) {
+      throw error;
+    }
+
     throw new Error(resolveApiErrorMessage(error, 'Falha ao gerar vídeo.'));
+  }
+};
+
+export const estimateDashboardVideo = async ({
+  gateway,
+  token,
+  payload,
+}: {
+  gateway: VideosGateway;
+  token: string;
+  payload: EstimateVideoPayload;
+}): Promise<GenerationEstimate> => {
+  if (!payload.model.backendModelId) {
+    throw new Error('Modelo inválido para estimativa.');
+  }
+
+  if (!payload.preset.backendPresetId) {
+    throw new Error('Preset inválido para estimativa.');
+  }
+
+  try {
+    const estimate = await gateway.estimateJob(token, {
+      modelId: payload.model.backendModelId,
+      presetId: payload.preset.backendPresetId,
+      durationSeconds: payload.durationSeconds ?? payload.preset.durationSeconds ?? null,
+    });
+
+    return mapGenerationEstimateToViewModel(estimate);
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 419)) {
+      throw error;
+    }
+
+    throw new Error(resolveApiErrorMessage(error, 'Falha ao calcular custo da geração.'));
   }
 };
 
@@ -71,12 +123,15 @@ export const makeFallbackCreatedVideo = (payload: CreateVideoPayload): VideoJobI
     title: payload.title || payload.preset.name,
     imageSrc: payload.imageSrc,
     videoUrl: '',
+    modelName: payload.model.name,
     presetName: payload.preset.name,
     status: 'processing',
     format: payload.preset.aspectRatio ?? '9:16',
     prompt: payload.preset.description,
     createdAt: new Date().toISOString(),
-    creditsUsed: 1,
+    durationSeconds: payload.durationSeconds ?? payload.preset.durationSeconds ?? null,
+    estimatedCostUsd: payload.estimatedGenerationCostUsd ?? null,
+    creditsUsed: payload.estimatedCreditsRequired ?? 0,
   };
 };
 

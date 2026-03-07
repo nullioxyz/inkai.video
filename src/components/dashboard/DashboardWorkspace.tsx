@@ -3,8 +3,9 @@
 import { useDashboard } from '@/context/dashboard-context';
 import { useLocale } from '@/context/LocaleContext';
 import { mustRedirectToFirstLoginReset } from '@/modules/auth/application/first-login-guard';
+import { shouldRedirectToLogin } from '@/modules/dashboard/application/session-expiration';
 import { shouldPollQuotaFallback } from '@/modules/videos/application/quota-polling';
-import type { PresetItem } from '@/types/dashboard';
+import type { ModelItem, PresetItem } from '@/types/dashboard';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import DashboardSidebar from '@/components/sidebar/Sidebar';
@@ -20,13 +21,16 @@ const DashboardWorkspace = () => {
   const pathname = usePathname();
   const {
     token,
+    sessionExpired,
     isHydrated,
     mustResetPassword,
     videos,
     createVideo,
+    estimateVideoGeneration,
     renameVideo,
-    presets,
-    presetCategories,
+    models,
+    presetsByModelId,
+    presetCategoriesByModelId,
     loadingPresets,
     presetsError,
     loadingJobs,
@@ -35,6 +39,7 @@ const DashboardWorkspace = () => {
     quotaError,
     realtimeConnected,
     refreshQuota,
+    creditBalance,
   } = useDashboard();
   const { collapsed: sidebarCollapsed, toggle: handleToggleSidebar } = usePersistedSidebarCollapse();
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -43,10 +48,16 @@ const DashboardWorkspace = () => {
   const [createViewAnimationKey, setCreateViewAnimationKey] = useState(0);
 
   useEffect(() => {
-    if (isHydrated && !token) {
+    if (
+      shouldRedirectToLogin({
+        isHydrated,
+        token,
+        sessionExpired,
+      })
+    ) {
       router.replace('/login');
     }
-  }, [isHydrated, router, token]);
+  }, [isHydrated, router, sessionExpired, token]);
 
   useEffect(() => {
     if (!isHydrated || !token) {
@@ -69,15 +80,21 @@ const DashboardWorkspace = () => {
     title: string;
     imageFile: File;
     imageSrc: string;
-    format: string;
-    prompt: string;
+    model: ModelItem;
     preset: PresetItem;
+    durationSeconds?: number | null;
+    estimatedCreditsRequired?: number;
+    estimatedGenerationCostUsd?: string | null;
   }) => {
     const createdVideo = await createVideo({
       title: payload.title,
       imageFile: payload.imageFile,
       imageSrc: payload.imageSrc,
+      model: payload.model,
       preset: payload.preset,
+      durationSeconds: payload.durationSeconds,
+      estimatedCreditsRequired: payload.estimatedCreditsRequired,
+      estimatedGenerationCostUsd: payload.estimatedGenerationCostUsd,
     });
 
     return createdVideo;
@@ -150,12 +167,15 @@ const DashboardWorkspace = () => {
               <WorkspaceDetailView video={selectedVideo} isReturningToCreate={isReturningToCreate} onCreateNewVideo={handleCreateNewVideo} />
             ) : (
               <WorkspaceCreateView
-                presets={presets}
-                presetCategories={presetCategories}
+                models={models}
+                presetsByModelId={presetsByModelId}
+                presetCategoriesByModelId={presetCategoriesByModelId}
                 loadingPresets={loadingPresets}
                 presetsError={presetsError}
                 quota={quota}
                 quotaError={quotaError}
+                creditBalance={creditBalance}
+                onEstimateVideo={estimateVideoGeneration}
                 onGenerateVideo={handleGenerateVideo}
                 animateInTrigger={createViewAnimationKey}
               />

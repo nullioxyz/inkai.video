@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useMemo, useReducer } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo, useReducer } from 'react';
 
 interface VideoGenerationFormState {
   title: string;
@@ -9,11 +9,13 @@ interface VideoGenerationFormState {
   inputImageSrc: string | null;
   outputImageSrc: string | null;
   inputImageFile: File | null;
+  durationSeconds: number | null;
   errorMessage: string | null;
 }
 
 type Action =
   | { type: 'set_title'; payload: string }
+  | { type: 'set_duration'; payload: number | null }
   | { type: 'set_error'; payload: string | null }
   | { type: 'set_input'; payload: { file: File; src: string; name: string } }
   | { type: 'clear_input' }
@@ -28,6 +30,7 @@ const initialState: VideoGenerationFormState = {
   inputImageSrc: null,
   outputImageSrc: null,
   inputImageFile: null,
+  durationSeconds: null,
   errorMessage: null,
 };
 
@@ -35,6 +38,8 @@ const reducer = (state: VideoGenerationFormState, action: Action): VideoGenerati
   switch (action.type) {
     case 'set_title':
       return { ...state, title: action.payload };
+    case 'set_duration':
+      return { ...state, durationSeconds: action.payload, errorMessage: null };
     case 'set_error':
       return { ...state, errorMessage: action.payload };
     case 'set_input':
@@ -76,6 +81,7 @@ const reducer = (state: VideoGenerationFormState, action: Action): VideoGenerati
 
 interface VideoGenerationFormContextValue extends VideoGenerationFormState {
   setTitle: (value: string) => void;
+  setDurationSeconds: (value: number | null) => void;
   setError: (value: string | null) => void;
   setInputImage: (file: File | null) => void;
   setOutputImage: (file: File | null) => void;
@@ -87,7 +93,19 @@ const VideoGenerationFormContext = createContext<VideoGenerationFormContextValue
 export const VideoGenerationFormProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const setInputImage = (file: File | null) => {
+  const setTitle = useCallback((value: string) => {
+    dispatch({ type: 'set_title', payload: value });
+  }, []);
+
+  const setDurationSeconds = useCallback((value: number | null) => {
+    dispatch({ type: 'set_duration', payload: value });
+  }, []);
+
+  const setError = useCallback((value: string | null) => {
+    dispatch({ type: 'set_error', payload: value });
+  }, []);
+
+  const setInputImage = useCallback((file: File | null) => {
     if (!file) {
       if (state.inputImageSrc?.startsWith('blob:')) {
         URL.revokeObjectURL(state.inputImageSrc);
@@ -107,9 +125,9 @@ export const VideoGenerationFormProvider = ({ children }: { children: ReactNode 
         name: file.name,
       },
     });
-  };
+  }, [state.inputImageSrc]);
 
-  const setOutputImage = (file: File | null) => {
+  const setOutputImage = useCallback((file: File | null) => {
     if (!file) {
       if (state.outputImageSrc?.startsWith('blob:')) {
         URL.revokeObjectURL(state.outputImageSrc);
@@ -128,9 +146,9 @@ export const VideoGenerationFormProvider = ({ children }: { children: ReactNode 
         name: file.name,
       },
     });
-  };
+  }, [state.outputImageSrc]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     if (state.inputImageSrc?.startsWith('blob:')) {
       URL.revokeObjectURL(state.inputImageSrc);
     }
@@ -138,18 +156,19 @@ export const VideoGenerationFormProvider = ({ children }: { children: ReactNode 
       URL.revokeObjectURL(state.outputImageSrc);
     }
     dispatch({ type: 'reset' });
-  };
+  }, [state.inputImageSrc, state.outputImageSrc]);
 
   const value = useMemo<VideoGenerationFormContextValue>(
     () => ({
       ...state,
-      setTitle: (value) => dispatch({ type: 'set_title', payload: value }),
-      setError: (value) => dispatch({ type: 'set_error', payload: value }),
+      setTitle,
+      setDurationSeconds,
+      setError,
       setInputImage,
       setOutputImage,
       reset,
     }),
-    [state],
+    [reset, setDurationSeconds, setError, setInputImage, setOutputImage, setTitle, state],
   );
 
   return <VideoGenerationFormContext.Provider value={value}>{children}</VideoGenerationFormContext.Provider>;

@@ -1,18 +1,18 @@
-import { mapPresetToViewModel } from '@/modules/presets/application/mappers';
+import { mapModelToViewModel, mapPresetToViewModel } from '@/modules/presets/application/mappers';
 import { PresetsGateway } from '@/modules/presets/domain/contracts';
-import { PresetItem } from '@/types/dashboard';
+import { ModelItem, PresetItem } from '@/types/dashboard';
 
-export interface DashboardPresetsSnapshot {
-  presets: PresetItem[];
-  presetCategories: string[];
+export interface DashboardGenerationCatalogSnapshot {
+  models: ModelItem[];
+  presetsByModelId: Record<string, PresetItem[]>;
+  presetCategoriesByModelId: Record<string, string[]>;
 }
 
 export const buildPresetCategories = (
   presets: PresetItem[],
-  presetFilters: Array<{ modelId: number; filters: { aspect_ratios: string[]; tags: Array<{ slug: string }> } }>,
+  presetFilters: { aspect_ratios: string[]; tags: Array<{ slug: string }> },
 ): string[] => {
-  const categoriesFromFilters = presetFilters
-    .flatMap((entry) => [...entry.filters.tags.map((tag) => tag.slug), ...entry.filters.aspect_ratios])
+  const categoriesFromFilters = [...presetFilters.tags.map((tag) => tag.slug), ...presetFilters.aspect_ratios]
     .filter((category) => category.trim() !== '');
 
   const categoriesFromPresets = presets.flatMap((preset) => {
@@ -23,12 +23,44 @@ export const buildPresetCategories = (
   return Array.from(new Set([...categoriesFromFilters, ...categoriesFromPresets]));
 };
 
-export const fetchDashboardPresets = async (gateway: PresetsGateway, token: string): Promise<DashboardPresetsSnapshot> => {
-  const [presetRows, presetFilters] = await Promise.all([gateway.listPresets(token), gateway.listPresetFilters(token)]);
-  const presets = presetRows.map(mapPresetToViewModel);
+export const fetchDashboardGenerationCatalog = async (
+  gateway: PresetsGateway,
+  token: string,
+): Promise<DashboardGenerationCatalogSnapshot> => {
+  const modelRows = await gateway.listModels(token);
+  const models = modelRows
+    .map(mapModelToViewModel)
+    .filter((model) => model.publicVisible)
+    .sort((left, right) => {
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+
+  const entries = await Promise.all(
+    models.map(async (model) => {
+      const [presetRows, presetFilters] = await Promise.all([
+        gateway.listPresets(token, model.backendModelId),
+        gateway.listPresetFilters(token, model.backendModelId),
+      ]);
+      const presets = presetRows.map(mapPresetToViewModel);
+
+      return {
+        modelId: model.id,
+        presets,
+        presetCategories: buildPresetCategories(presets, presetFilters),
+      };
+    }),
+  );
+
+  const presetsByModelId = Object.fromEntries(entries.map((entry) => [entry.modelId, entry.presets]));
+  const presetCategoriesByModelId = Object.fromEntries(entries.map((entry) => [entry.modelId, entry.presetCategories]));
 
   return {
-    presets,
-    presetCategories: buildPresetCategories(presets, presetFilters),
+    models,
+    presetsByModelId,
+    presetCategoriesByModelId,
   };
 };

@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { mapPresetToViewModel } from '../mappers';
+import { mapModelToViewModel, mapPresetToViewModel } from '../mappers';
 
 describe('preset mapper', () => {
+  it('maps backend model into view model', () => {
+    const model = mapModelToViewModel({
+      id: 2,
+      platform_id: 1,
+      name: 'Kling',
+      slug: 'kling',
+      provider_model_key: 'kling-v2',
+      version: '2.5',
+      active: true,
+      public_visible: true,
+      available_for_generation: true,
+      cost_per_second_usd: '0.1500',
+      sort_order: 1,
+      created_at: null,
+      updated_at: null,
+    });
+
+    expect(model.id).toBe('2');
+    expect(model.backendModelId).toBe(2);
+    expect(model.subtitle).toContain('2.5');
+    expect(model.costPerSecondUsd).toBe('0.1500');
+    expect(model.availableForGeneration).toBe(true);
+  });
+
   it('maps backend preset into view model', () => {
     const preset = mapPresetToViewModel({
       id: 10,

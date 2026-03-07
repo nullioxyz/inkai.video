@@ -1,4 +1,4 @@
-import { BackendPreset, BackendPresetFiltersResponse } from '@/lib/api/dashboard';
+import { BackendModel, BackendPreset, BackendPresetFiltersResponse } from '@/lib/api/dashboard';
 
 export interface PresetsQueryFilters {
   aspectRatio?: string;
@@ -7,6 +7,7 @@ export interface PresetsQueryFilters {
 }
 
 export interface PresetsGateway {
-  listPresets(token: string, filters?: PresetsQueryFilters): Promise<BackendPreset[]>;
-  listPresetFilters(token: string): Promise<Array<{ modelId: number; filters: BackendPresetFiltersResponse }>>;
+  listModels(token: string): Promise<BackendModel[]>;
+  listPresets(token: string, modelId: number, filters?: PresetsQueryFilters): Promise<BackendPreset[]>;
+  listPresetFilters(token: string, modelId: number): Promise<BackendPresetFiltersResponse>;
 }
