@@ -10,9 +10,21 @@ interface UploadAndTitleSectionProps {
   onGenerate: () => void;
   canGenerate: boolean;
   disabled?: boolean;
+  generateDisabled?: boolean;
+  generateButtonLabel: string;
+  generateButtonTitle: string;
+  isGenerating?: boolean;
 }
 
-const UploadAndTitleSection = ({ onGenerate, canGenerate, disabled = false }: UploadAndTitleSectionProps) => {
+const UploadAndTitleSection = ({
+  onGenerate,
+  canGenerate,
+  disabled = false,
+  generateDisabled,
+  generateButtonLabel,
+  generateButtonTitle,
+  isGenerating = false,
+}: UploadAndTitleSectionProps) => {
   const { t } = useLocale();
   const {
     title,
@@ -52,7 +64,10 @@ const UploadAndTitleSection = ({ onGenerate, canGenerate, disabled = false }: Up
 
         <UploadActionBar
           disabled={disabled}
-          canGenerate={canGenerate}
+          generateDisabled={generateDisabled ?? !canGenerate}
+          generateButtonLabel={generateButtonLabel}
+          generateButtonTitle={generateButtonTitle}
+          isGenerating={isGenerating}
           title={title}
           onTitleChange={setTitle}
           onGenerate={onGenerate}

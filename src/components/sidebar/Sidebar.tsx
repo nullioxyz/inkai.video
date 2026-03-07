@@ -35,7 +35,7 @@ const DashboardSidebar = ({
 }: DashboardSidebarProps) => {
   const pathname = usePathname();
   const { t, intlLocale } = useLocale();
-  const { logout } = useDashboard();
+  const { creditBalance, logout } = useDashboard();
   const rename = useSidebarRename({ onRenameVideo, t });
 
   const handleMobileClose = () => {
@@ -56,6 +56,7 @@ const DashboardSidebar = ({
 
         <SidebarNavigation
           collapsed={isCollapsed}
+          creditBalance={creditBalance}
           pathname={pathname}
           t={t}
           onCreate={() => {

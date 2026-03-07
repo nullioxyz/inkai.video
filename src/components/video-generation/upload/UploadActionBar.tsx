@@ -6,7 +6,10 @@ import UploadTitleInput from './UploadTitleInput';
 
 interface UploadActionBarProps {
   disabled: boolean;
-  canGenerate: boolean;
+  generateDisabled: boolean;
+  generateButtonLabel: string;
+  generateButtonTitle: string;
+  isGenerating: boolean;
   title: string;
   onTitleChange: (value: string) => void;
   onGenerate: () => void;
@@ -19,7 +22,10 @@ interface UploadActionBarProps {
 
 const UploadActionBar = ({
   disabled,
-  canGenerate,
+  generateDisabled,
+  generateButtonLabel,
+  generateButtonTitle,
+  isGenerating,
   title,
   onTitleChange,
   onGenerate,
@@ -32,7 +38,7 @@ const UploadActionBar = ({
   const { t } = useLocale();
 
   return (
-    <div className="relative flex h-10 items-center gap-2">
+    <div className="relative flex min-h-10 items-center gap-2">
       <div ref={uploadMenuRef} className="relative shrink-0">
         <UploadMenuToggleButton
           disabled={disabled}
@@ -56,10 +62,12 @@ const UploadActionBar = ({
       />
 
       <UploadGenerateButton
-        ariaLabel={t('dashboard.generateVideo')}
-        title={t('dashboard.generateVideo')}
+        ariaLabel={generateButtonTitle}
+        title={generateButtonTitle}
+        label={generateButtonLabel}
         onClick={onGenerate}
-        disabled={!canGenerate || disabled}
+        disabled={generateDisabled || disabled}
+        loading={isGenerating}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import MosaicCardSkeleton from '@/components/common/skeletons/MosaicCardSkeleton';
+import { useLocale } from '@/context/LocaleContext';
 import { resolvePresetCarouselScrollState, resolvePresetCarouselStep } from '@/modules/videos/application/preset-carousel';
 import type { PresetItem } from '@/types/dashboard';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -23,6 +24,7 @@ const PresetGridSection = ({
   selectedPresetId,
   onSelectPreset,
 }: PresetGridSectionProps) => {
+  const { t } = useLocale();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -90,6 +92,8 @@ const PresetGridSection = ({
           </div>
         ) : presetsError ? (
           <p className="text-tagline-2 text-ns-red text-center">{presetsError}</p>
+        ) : filteredPresets.length === 0 ? (
+          <p className="text-tagline-2 text-secondary/70 dark:text-accent/70 text-center">{t('dashboard.noPresetsForCurrentFilter')}</p>
         ) : (
           <Suspense
             fallback={<div className="h-[200px] w-full animate-pulse rounded-[12px] bg-background-3 dark:bg-background-7" />}>

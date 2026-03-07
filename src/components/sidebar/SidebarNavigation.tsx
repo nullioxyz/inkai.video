@@ -5,6 +5,7 @@ import SidebarCreateButton from './SidebarCreateButton';
 
 interface SidebarNavigationProps {
   collapsed: boolean;
+  creditBalance: number;
   pathname: string;
   t: (key: MessageKey) => string;
   onCreate: () => void;
@@ -19,10 +20,10 @@ const isMenuItemActive = (pathname: string, menuKey: string, href: string) => {
   return pathname.startsWith(href);
 };
 
-const SidebarNavigation = ({ collapsed, pathname, t, onCreate, onLogout }: SidebarNavigationProps) => {
+const SidebarNavigation = ({ collapsed, creditBalance, pathname, t, onCreate, onLogout }: SidebarNavigationProps) => {
   return (
     <nav aria-label="Dashboard navigation" className="border-stroke-3 dark:border-stroke-7 space-y-1 border-b px-3 py-4">
-      <SidebarCreateButton collapsed={collapsed} onCreate={onCreate} t={t} />
+      <SidebarCreateButton collapsed={collapsed} creditBalance={creditBalance} onCreate={onCreate} t={t} />
 
       {menuItems.map((item) => {
         const isActive = isMenuItemActive(pathname, item.key, item.href);
