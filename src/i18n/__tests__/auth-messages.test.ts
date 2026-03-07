@@ -6,6 +6,7 @@ const requiredKeys = [
   'auth.login.emailLabel',
   'auth.login.passwordLabel',
   'auth.login.submit',
+  'auth.login.sessionExpired',
   'auth.firstLogin.title',
   'auth.firstLogin.submit',
   'auth.signup.usernameLabel',

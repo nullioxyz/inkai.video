@@ -140,9 +140,22 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
     headers: requestHeaders,
   });
 
+  const hasNoContent = response.status === 204 || response.status === 205;
   const contentType = response.headers.get('content-type') ?? '';
   const isJson = contentType.includes('application/json');
-  const payload = isJson ? await response.json() : await response.text();
+  let payload: unknown = null;
+
+  if (!hasNoContent) {
+    if (isJson) {
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+    } else {
+      payload = await response.text();
+    }
+  }
 
   if (!response.ok) {
     const message =

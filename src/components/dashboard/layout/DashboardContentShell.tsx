@@ -2,6 +2,7 @@
 
 import { useDashboard } from '@/context/dashboard-context';
 import { mustRedirectToFirstLoginReset } from '@/modules/auth/application/first-login-guard';
+import { shouldRedirectToLogin } from '@/modules/dashboard/application/session-expiration';
 import type { VideoJobItem } from '@/types/dashboard';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
@@ -16,7 +17,7 @@ interface DashboardContentShellProps {
 }
 
 const DashboardContentShell = ({ children, videos, selectedVideoId = null }: DashboardContentShellProps) => {
-  const { videos: contextVideos, token, isHydrated, renameVideo, mustResetPassword } = useDashboard();
+  const { videos: contextVideos, token, sessionExpired, isHydrated, renameVideo, mustResetPassword } = useDashboard();
   const router = useRouter();
   const pathname = usePathname();
   const resolvedVideos = videos ?? contextVideos;
@@ -28,10 +29,16 @@ const DashboardContentShell = ({ children, videos, selectedVideoId = null }: Das
   }, [pathname]);
 
   useEffect(() => {
-    if (isHydrated && !token) {
+    if (
+      shouldRedirectToLogin({
+        isHydrated,
+        token,
+        sessionExpired,
+      })
+    ) {
       router.replace('/login');
     }
-  }, [isHydrated, router, token]);
+  }, [isHydrated, router, sessionExpired, token]);
 
   useEffect(() => {
     if (!isHydrated || !token) {

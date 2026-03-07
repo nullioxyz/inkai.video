@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { apiRequest } from '../client';
 import { exchangeImpersonationHash, getMe, loginWithEmail, resetFirstLoginPassword } from '../dashboard';
 
-vi.mock('../client', () => ({
-  apiRequest: vi.fn(),
-}));
+vi.mock('../client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../client')>();
+  return {
+    ...actual,
+    apiRequest: vi.fn(),
+  };
+});
 
 describe('dashboard auth api', () => {
   it('sends login payload with context headers', async () => {
@@ -60,6 +64,16 @@ describe('dashboard auth api', () => {
     expect(me.id).toBe(7);
     expect(me.must_reset_password).toBe(true);
     expect(vi.mocked(apiRequest)).toHaveBeenCalledWith('/api/auth/me', { token: 'token' });
+  });
+
+  it('treats no content response from /me as expired session', async () => {
+    vi.mocked(apiRequest).mockResolvedValue('' as never);
+
+    await expect(getMe('token')).rejects.toMatchObject({
+      name: 'ApiError',
+      message: 'Session expired',
+      status: 401,
+    });
   });
 
   it('exchanges impersonation hash using authenticated token', async () => {

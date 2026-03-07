@@ -35,4 +35,20 @@ describe('api client accept-language header', () => {
     const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers;
     expect(headers.get('Accept-Language')).toBe('pt-BR');
   });
+
+  it('handles 204 no content without json parse errors', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => {
+        throw new Error('should not parse json');
+      },
+      text: async () => '',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await apiRequest('/api/ping');
+    expect(response).toBeNull();
+  });
 });

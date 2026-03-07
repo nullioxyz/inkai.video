@@ -6,6 +6,7 @@ import CreditsPageContent from '@/components/credits/CreditsPageContent';
 import { useDashboard } from '@/context/dashboard-context';
 import { useLocale } from '@/context/LocaleContext';
 import { resolveApiErrorMessage } from '@/lib/api/client';
+import { isSessionExpiredError } from '@/modules/dashboard/application/session-expiration';
 import { getCreditsVideoGenerations } from '@/lib/api/dashboard';
 import { mapCreditVideoGenerationToViewModel } from '@/modules/credits/application/mappers';
 import { CreditVideoGenerationViewModel } from '@/modules/credits/domain/view-models';
@@ -13,7 +14,7 @@ import { useEffect, useState } from 'react';
 
 const CreditsPage = () => {
   const { t } = useLocale();
-  const { videos, creditBalance, token } = useDashboard();
+  const { videos, creditBalance, token, markSessionExpired } = useDashboard();
   usePageTabTitle(t('credits.title'));
   const [videoGenerations, setVideoGenerations] = useState<CreditVideoGenerationViewModel[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +38,11 @@ const CreditsPage = () => {
         setLastPage(response.meta.last_page);
         setTotal(response.meta.total);
       } catch (fetchError) {
+        if (isSessionExpiredError(fetchError)) {
+          markSessionExpired();
+          return;
+        }
+
         setError(resolveApiErrorMessage(fetchError, 'Falha ao carregar créditos.'));
       } finally {
         setLoading(false);
@@ -44,7 +50,7 @@ const CreditsPage = () => {
     };
 
     void load();
-  }, [token, currentPage, perPage]);
+  }, [currentPage, markSessionExpired, perPage, token]);
 
   return (
     <DashboardContentShell videos={videos}>
