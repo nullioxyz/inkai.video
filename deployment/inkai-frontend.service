@@ -1,0 +1,14 @@
+[Unit]
+Description=Inkai Frontend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/html/inkai/frontend/current
+EnvironmentFile=/var/www/html/inkai/frontend/.env
+ExecStart=/home/deploy_inkai/.nvm/versions/node/v24.14.0/bin/node server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
